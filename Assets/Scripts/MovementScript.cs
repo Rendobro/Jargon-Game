@@ -6,7 +6,6 @@ using UnityEngine;
 
 public class MovementScript : MonoBehaviour
 {
-    //Test
     public CharacterController ctrl;
     public Transform sphereLoc;
     public LayerMask groundMask;
@@ -17,7 +16,7 @@ public class MovementScript : MonoBehaviour
     public float speed = 5;
     private bool isGrounded;
 
-    void Update()
+    void FixedUpdate()
     {
         isGrounded = Physics.CheckSphere(sphereLoc.position, 0.2f, groundMask);
         if (isGrounded && velocity.y < 0)
@@ -47,6 +46,21 @@ public class MovementScript : MonoBehaviour
     public void Jump()
     {
         velocity.y = Mathf.Sqrt(Mathf.Abs(2 * gravity * jumpPower));
+    }
+
+    public void ChangeVelocityVertical(float speed)
+    {
+        velocity.y = speed;
+    }
+
+    public void ResetVelocityVertical()
+    {
+        velocity.y = 0f;
+    }
+
+    public bool IsPlayerGrounded()
+    {
+        return isGrounded;
     }
 }
 

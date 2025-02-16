@@ -6,6 +6,7 @@ using UnityEngine;
 
 public class MovementScript : MonoBehaviour
 {
+    //Test
     public CharacterController ctrl;
     public Transform sphereLoc;
     public LayerMask groundMask;

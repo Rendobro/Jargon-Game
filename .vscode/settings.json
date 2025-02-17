@@ -58,6 +58,7 @@
     },
     "dotnet.defaultSolution": "Jargon.sln",
     "cSpell.words": [
+        "Behaviour",
         "Mathf",
         "Rigidbody"
     ]

@@ -4,12 +4,11 @@ using UnityEngine;
 
 public class SpawnScript : MonoBehaviour
 {
-    public GameObject player;
     private PlayerResetScript prs;
     // Start is called before the first frame update
     void Start()
     {
-        prs = player.GetComponent<PlayerResetScript>();
+        prs = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerResetScript>();
     }
 
     // Update is called once per frame
@@ -18,6 +17,10 @@ public class SpawnScript : MonoBehaviour
         if (Input.GetButtonDown("Reset"))
         {
             prs.ResetChar(transform);
+        }
+        if (Input.GetButtonDown("HardReset"))
+        {
+            prs.HardResetChar();
         }
     }
 }

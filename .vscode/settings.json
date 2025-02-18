@@ -59,7 +59,9 @@
     "dotnet.defaultSolution": "Jargon.sln",
     "cSpell.words": [
         "Behaviour",
+        "Lerp",
         "Mathf",
+        "Prefs",
         "Rigidbody"
     ]
 }

@@ -10,6 +10,7 @@ public class MouseScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        PlayerPrefs.SetFloat("sensitivity",sensitivity);
         Cursor.lockState = CursorLockMode.Locked;
     }
 

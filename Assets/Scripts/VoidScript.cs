@@ -39,4 +39,8 @@ public class VoidScript : MonoBehaviour
     {
         actualCheckpoint.position = newCheckpointPos;
     }
+    public Transform GetActualCheckpoint()
+    {
+        return actualCheckpoint;
+    }
 }

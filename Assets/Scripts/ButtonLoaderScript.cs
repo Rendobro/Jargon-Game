@@ -1,7 +1,5 @@
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
-using Palmmedia.ReportGenerator.Core.Common;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -9,6 +7,8 @@ public class ButtonLoaderScript : MonoBehaviour
 {
     public float menuTransitionDuration = 1.6f;
     private GameObject[] menus;
+    private CharacterController player;
+    private PlayerResetScript prs;
     // Start is called before the first frame update
     void Start()
     {
@@ -29,6 +29,7 @@ public class ButtonLoaderScript : MonoBehaviour
             PlayerPrefs.SetInt("levelIndex",1);
         }
         SceneManager.LoadScene(PlayerPrefs.GetInt("levelIndex"));
+        SceneManager.sceneLoaded += LoadCheckpointData;
     }
     public void BringSettingsMenuLeft()
     {
@@ -46,6 +47,26 @@ public class ButtonLoaderScript : MonoBehaviour
             Transform[] transforms = menus[i].GetComponentsInChildren<Transform>();
             Transform mrp = transforms.FirstOrDefault(item => item.gameObject.name.Equals("MenuRightPosition"+(i+1)));
             StartCoroutine(SlowMovePosition(menus[i].transform.position,mrp.position,menuTransitionDuration,i));
+        }
+    }
+    private void LoadCheckpointData(Scene scene, LoadSceneMode mode)
+    {
+        // if the loaded scene is the scene where the player has last left off
+        if (scene.name.Equals(SceneManager.GetSceneByBuildIndex(PlayerPrefs.GetInt("levelIndex")).name))
+        {
+            player = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
+            prs = player.GetComponent<PlayerResetScript>();
+            int checkpointNum = PlayerPrefs.GetInt("checkpoint");
+            if (checkpointNum<1) // if the player has never played OR hard reset to have no checkpoint data
+            {
+                Debug.Log("Hard Reset The Character");
+                prs.HardResetChar();
+            }
+            else
+            {
+                // sets the player's position to their saved checkpoint's position;
+                prs.ResetChar(GameObject.FindGameObjectWithTag("Environment").transform.Find("Checkpoint"+checkpointNum).position);
+            }
         }
     }
     private IEnumerator SlowMovePosition(Vector3 startPosition, Vector3 endPosition, float duration, int index)

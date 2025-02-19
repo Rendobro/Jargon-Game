@@ -26,7 +26,7 @@ public class PlayerResetScript : MonoBehaviour
     public void ResetChar()
     {
         ctrl.enabled = false;
-        transform.SetPositionAndRotation(new Vector3(0,5,0), Quaternion.identity);
+        transform.SetPositionAndRotation(worldSpawn.position, Quaternion.identity);
         ctrl.enabled = true;
         cam.transform.rotation = Quaternion.identity;
         moveCS.ResetVelocityVertical();
@@ -51,6 +51,7 @@ public class PlayerResetScript : MonoBehaviour
 
     public void HardResetChar()
     {
+        PlayerPrefs.SetInt("checkpoint",0);
         ctrl.enabled = false;
         transform.SetPositionAndRotation(worldSpawn.position, worldSpawn.rotation);
         ctrl.enabled = true;

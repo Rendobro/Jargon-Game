@@ -133,7 +133,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2134576726987260263, guid: 0fff87b73f46b46c399d665e069c0493, type: 3}
       propertyPath: m_Name
-      value: Checkpoint
+      value: Checkpoint1
       objectReference: {fileID: 0}
     - target: {fileID: 8150340957790011876, guid: 0fff87b73f46b46c399d665e069c0493, type: 3}
       propertyPath: m_LocalScale.x
@@ -956,7 +956,7 @@ GameObject:
   - component: {fileID: 987748974}
   m_Layer: 0
   m_Name: Environment
-  m_TagString: Untagged
+  m_TagString: Environment
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1753,7 +1753,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2134576726987260263, guid: 0fff87b73f46b46c399d665e069c0493, type: 3}
       propertyPath: m_Name
-      value: Checkpoint
+      value: Checkpoint2
       objectReference: {fileID: 0}
     - target: {fileID: 8150340957790011876, guid: 0fff87b73f46b46c399d665e069c0493, type: 3}
       propertyPath: m_LocalPosition.x

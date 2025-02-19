@@ -21,8 +21,13 @@ public class CheckpointScript : MonoBehaviour
     {
         if (hit.gameObject.layer == 7)
         {
-            Debug.Log("Checkpoint baby! " + hit.transform.position);
+        int checkpointNum = int.Parse(hit.gameObject.transform.parent.gameObject.name[^1]+"");
+        // checks if current checkpoint is already stored or if it's stored but doesn't match where the player actually respawns
+        if ((PlayerPrefs.GetInt("checkpoint") != checkpointNum) || ((PlayerPrefs.GetInt("checkpoint") == checkpointNum) && vs.GetActualCheckpoint().position != hit.gameObject.transform.parent.position))
+        {
+            PlayerPrefs.SetInt("checkpoint", checkpointNum);
             vs.ChangeCheckpoint(hit.transform.position);
+        }
         }
     }
 }

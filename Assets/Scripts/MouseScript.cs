@@ -5,12 +5,12 @@ using UnityEngine;
 public class MouseScript : MonoBehaviour
 {
     public Transform player;
-    public float sensitivity = 400f;
+    public float sensitivity;
     private float xRot = 0f;
     // Start is called before the first frame update
     void Start()
     {
-        PlayerPrefs.SetFloat("sensitivity",sensitivity);
+        sensitivity = PlayerPrefs.GetFloat("sensitivity");
         Cursor.lockState = CursorLockMode.Locked;
     }
 

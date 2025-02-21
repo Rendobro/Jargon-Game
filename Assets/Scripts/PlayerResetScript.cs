@@ -6,23 +6,11 @@ public class PlayerResetScript : MonoBehaviour
 {
 
     public Transform worldSpawn;
-    private VoidScript vs;
-    private MovementScript moveCS;
+    public VoidScript vs;
+    public MovementScript moveCS;
     public CharacterController ctrl;
     public Rigidbody rb;
     public Camera cam;
-    // Start is called before the first frame update
-    void Start()
-    {
-        moveCS = GameObject.FindGameObjectWithTag("Movement").GetComponent<MovementScript>();
-        vs = GameObject.FindGameObjectWithTag("Void").GetComponent<VoidScript>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
     public void ResetChar()
     {
         ctrl.enabled = false;
@@ -57,6 +45,6 @@ public class PlayerResetScript : MonoBehaviour
         ctrl.enabled = true;
         cam.transform.rotation = worldSpawn.rotation;
         moveCS.ResetVelocityVertical();
-        vs.ChangeCheckpoint(worldSpawn);
+        vs.ChangeCheckpoint(worldSpawn.position);
     }
 }

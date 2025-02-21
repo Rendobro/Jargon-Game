@@ -10,15 +10,20 @@ public class MovementScript : MonoBehaviour
     public Transform sphereLoc;
     public LayerMask groundMask;
     private Vector3 velocity;
-    public float gravity = -9.81f;
+    public float gravity;
     public float terminalVelocity = 50f;
     public float jumpPower = 5;
     public float speed = 5;
     private bool isGrounded;
+    private readonly float checkSphereRadius = 0.5f;
 
+    void Start()
+    {
+        gravity = -PlayerPrefs.GetFloat("gravity",9.81f);
+    }
     void FixedUpdate()
     {
-        isGrounded = Physics.CheckSphere(sphereLoc.position, 0.2f, groundMask);
+        isGrounded = Physics.CheckSphere(sphereLoc.position, checkSphereRadius, groundMask);
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
@@ -40,7 +45,7 @@ public class MovementScript : MonoBehaviour
 
         Vector3 moveDirection = transform.forward * vInput + transform.right * hInput;
 
-        ctrl.Move(moveDirection * speed * Time.deltaTime);
+        ctrl.Move(speed * Time.deltaTime * moveDirection);
     }
 
     public void Jump()

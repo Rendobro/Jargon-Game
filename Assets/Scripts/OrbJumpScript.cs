@@ -4,16 +4,9 @@ using UnityEngine;
 
 public class OrbJumpScript : MonoBehaviour
 {
-    private MovementScript moveCS;
+    public MovementScript moveCS;
     private bool ableToJump = false;
-    
-    // Start is called before the first frame update
-    void Start()
-    {
-        moveCS = GameObject.FindGameObjectWithTag("Movement").GetComponent<MovementScript>();
-    }
 
-    // Update is called once per frame
     void Update()
     {
         if (!moveCS.IsPlayerGrounded() && Input.GetButtonDown("Jump"))

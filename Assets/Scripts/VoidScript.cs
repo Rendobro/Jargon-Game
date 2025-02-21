@@ -1,23 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class VoidScript : MonoBehaviour
 {
-    public Transform checkpoint;
+    public Transform initialCheckpoint;
     private Transform actualCheckpoint;
     public CharacterController player;
-    private PlayerResetScript prs;
+    public PlayerResetScript prs;
     // Start is called before the first frame update
     void Start()
     {
-        prs = player.GetComponent<PlayerResetScript>();
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        actualCheckpoint = checkpoint;
+        actualCheckpoint = initialCheckpoint;
     }
 
     private void OnTriggerEnter(Collider hit)
@@ -33,11 +28,11 @@ public class VoidScript : MonoBehaviour
 
     public void ChangeCheckpoint(Transform newCheckpoint)
     {
-        actualCheckpoint.position = newCheckpoint.position;
+        if (actualCheckpoint != null) actualCheckpoint.position = newCheckpoint.position;
     }
     public void ChangeCheckpoint(Vector3 newCheckpointPos)
     {
-        actualCheckpoint.position = newCheckpointPos;
+        if (actualCheckpoint != null) actualCheckpoint.position = newCheckpointPos;
     }
     public Transform GetActualCheckpoint()
     {

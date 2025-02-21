@@ -213,7 +213,7 @@ Transform:
   m_GameObject: {fileID: 81238827}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.99, z: 0}
+  m_LocalPosition: {x: 0, y: -0.589, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -450,8 +450,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9019056b35fc540c4bbf100b622433a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  checkpoint: {fileID: 572215902}
+  initialCheckpoint: {fileID: 572215902}
   player: {fileID: 313999895}
+  prs: {fileID: 313999898}
 --- !u!1001 &256909363
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -711,6 +712,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04844d70a49ea4f64ae52bad22ae36b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  moveCS: {fileID: 1841386952}
 --- !u!114 &313999898
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -724,6 +726,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   worldSpawn: {fileID: 964461867}
+  vs: {fileID: 239255936}
+  moveCS: {fileID: 1841386952}
   ctrl: {fileID: 313999895}
   rb: {fileID: 313999896}
   cam: {fileID: 1071273669}
@@ -739,6 +743,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a457b5ac1ee7849e3824620747bec363, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  vs: {fileID: 239255936}
 --- !u!4 &552227398 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8150340957790011876, guid: 0fff87b73f46b46c399d665e069c0493, type: 3}
@@ -788,6 +793,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4b63ee80e9214d0a81af640cd9c74d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  prs: {fileID: 313999898}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -1416,7 +1422,7 @@ GameObject:
   - component: {fileID: 1841386952}
   m_Layer: 0
   m_Name: PlayerObject
-  m_TagString: Movement
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

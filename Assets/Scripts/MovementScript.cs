@@ -3,8 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-
-public class MovementScript : MonoBehaviour
+using Unity.Netcode;
+public class MovementScript : NetworkBehaviour
 {
     public CharacterController ctrl;
     public Transform sphereLoc;
@@ -19,6 +19,7 @@ public class MovementScript : MonoBehaviour
 
     void Start()
     {
+        //if (!IsOwner) Destroy(this);
         gravity = -PlayerPrefs.GetFloat("gravity",9.81f);
     }
     void FixedUpdate()

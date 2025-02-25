@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SpawnScript : MonoBehaviour
+public class SpawnScript : MonoBehaviour 
 {
     public PlayerResetScript prs;
     // Start is called before the first frame update
@@ -13,6 +13,10 @@ public class SpawnScript : MonoBehaviour
 
     // Update is called once per frame
     void Update()
+    {
+        ResetChecks();
+    }
+    private void ResetChecks()
     {
         if (Input.GetButtonDown("Reset"))
         {

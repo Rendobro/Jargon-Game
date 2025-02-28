@@ -6,29 +6,33 @@ using UnityEngine;
 using Unity.Netcode;
 public class MovementScript : NetworkBehaviour
 {
-    public CharacterController ctrl;
-    public Transform sphereLoc;
-    public LayerMask groundMask;
-    private Vector3 velocity;
+    [SerializeField] private CharacterController ctrl;
+    [SerializeField] private Transform sphereLoc;
+    [SerializeField] private LayerMask groundMask;
+    [SerializeField] private readonly float terminalVelocity = 50f;
+    [SerializeField] private float jumpPower = 5;
+    [SerializeField] private float speed = 5;
+    [SerializeField] private readonly float checkSphereRadius = 0.5f;
+    [SerializeField] private readonly short defaultGravity = 30;
     public float gravity;
-    public float terminalVelocity = 50f;
-    public float jumpPower = 5;
-    public float speed = 5;
+    private Vector3 velocity;
     private bool isGrounded;
-    private readonly float checkSphereRadius = 0.5f;
+    private bool isDisabled = false;
 
     void Start()
     {
         //if (!IsOwner) Destroy(this);
-        gravity = -PlayerPrefs.GetFloat("gravity",9.81f);
+        gravity = -PlayerPrefs.GetFloat("gravity",defaultGravity);
     }
     void FixedUpdate()
     {
+        if (isDisabled) return;
         isGrounded = Physics.CheckSphere(sphereLoc.position, checkSphereRadius, groundMask);
         if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
         }
+
         MoveDetector();
         if (Input.GetButton("Jump") && isGrounded)
         {
@@ -64,9 +68,26 @@ public class MovementScript : NetworkBehaviour
         velocity.y = 0f;
     }
 
+    public void DisableMovement()
+    {
+        isDisabled = true;
+    }
+    public void EnableMovement()
+    {
+        isDisabled = false;
+    }
     public bool IsPlayerGrounded()
     {
         return isGrounded;
+    }
+
+    public void ChangeSpeed(float newSpeed)
+    {
+        speed = newSpeed;
+    }
+    public void ChangeJumpPower(float newJumpPower)
+    {
+        jumpPower = newJumpPower;
     }
 }
 

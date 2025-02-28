@@ -162,7 +162,7 @@ public class ButtonLoaderScript : MonoBehaviour
     private void LoadCheckpointData(Scene scene, LoadSceneMode mode)
     {
         // if the loaded scene is the scene where the player has last left off
-        if (scene.name.Equals(SceneManager.GetSceneByBuildIndex(PlayerPrefs.GetInt("levelIndex")).name))
+        if (scene.name.Equals(SceneManager.GetSceneByBuildIndex(PlayerPrefs.GetInt("levelindex")).name))
         {
             player = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
             prs = player.GetComponent<PlayerResetScript>();
@@ -294,6 +294,13 @@ public class ButtonLoaderScript : MonoBehaviour
             }
         }
     }
+    public void QuitGame()
+    {
+        // remember to save game before this happens
+        Debug.Log("Quitted Game");
+        Application.Quit();
+    }
+    
     private void ClampValues(float value, float min, float max)
     {
         value = value < min ? min : value;

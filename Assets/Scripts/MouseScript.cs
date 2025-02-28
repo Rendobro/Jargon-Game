@@ -7,15 +7,23 @@ public class MouseScript : MonoBehaviour
     public Transform player;
     public float sensitivity;
     private float xRot = 0f;
-    // Start is called before the first frame update
+    private bool isDisabled = false;
+
     void Start()
     {
+        // Collect sensitivity from player's settings
         sensitivity = PlayerPrefs.GetFloat("sensitivity");
         Cursor.lockState = CursorLockMode.Locked;
     }
 
-    // Update is called once per frame
     void Update()
+    {
+        if (isDisabled) return;
+
+        MouseDetector();
+    }
+
+    private void MouseDetector()
     {
         float mouseX = Input.GetAxisRaw("Mouse X") * sensitivity * Time.deltaTime;
         float mouseY = Input.GetAxisRaw("Mouse Y") * sensitivity * Time.deltaTime;
@@ -25,5 +33,15 @@ public class MouseScript : MonoBehaviour
 
         transform.localRotation = Quaternion.Euler(xRot, 0f, 0f);
         player.transform.Rotate(Vector3.up * mouseX);
+    }
+
+    public void DisableRotation()
+    {
+        isDisabled = true;
+    }
+
+    public void EnableRotation()
+    {
+        isDisabled = false;
     }
 }

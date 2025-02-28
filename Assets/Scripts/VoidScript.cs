@@ -5,10 +5,11 @@ using UnityEngine.SceneManagement;
 
 public class VoidScript : MonoBehaviour
 {
-    public Transform initialCheckpoint;
+    [SerializeField] private Transform initialCheckpoint;
+    [SerializeField] private CharacterController player;
+    [SerializeField] private PlayerResetScript prs;
     private Transform actualCheckpoint;
-    public CharacterController player;
-    public PlayerResetScript prs;
+
     // Start is called before the first frame update
     void Start()
     {

@@ -13,6 +13,14 @@ public class OrbJumpScript : MonoBehaviour
         {
             ableToJump = true;
         }
+        else if (moveCS.IsPlayerGrounded() && Input.GetKeyDown(KeyCode.Space))
+        {
+            ableToJump = true;
+        }
+        else if (moveCS.IsPlayerGrounded())
+        {
+            ableToJump = false;
+        }
         DevSecret();
     }
 

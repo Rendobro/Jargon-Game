@@ -50,6 +50,8 @@ public class MovementScript : NetworkBehaviour
 
         Vector3 moveDirection = transform.forward * vInput + transform.right * hInput;
 
+        if (moveDirection.magnitude > 1) moveDirection = moveDirection.normalized;
+
         ctrl.Move(speed * Time.deltaTime * moveDirection);
     }
 

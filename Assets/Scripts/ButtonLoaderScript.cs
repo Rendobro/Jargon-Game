@@ -10,8 +10,9 @@ using UnityEngine.UI;
 public class ButtonLoaderScript : MonoBehaviour
 {
     [SerializeField] private float menuTransitionDuration = 1.6f;
-    private static int currentMenuIndex_X = 1;
-    private static int currentMenuIndex_Y = 1;
+    [SerializeField] private GameObject mainMenuBoard;
+    private static int currentMenuIndex_X;
+    private static int currentMenuIndex_Y;
     private GameObject[][] menus;
     private CharacterController player;
     private PlayerResetScript prs;
@@ -20,6 +21,8 @@ public class ButtonLoaderScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        currentMenuIndex_Y = GetMenuIndex(mainMenuBoard).row;
+        currentMenuIndex_X = GetMenuIndex(mainMenuBoard).col;
         playText = GameObject.Find("MenuBoard11").GetComponentInChildren<Button>().gameObject.GetComponentInChildren<TextMeshProUGUI>();
         InitializeMenus();
         InitializeSliders();
@@ -146,12 +149,12 @@ public class ButtonLoaderScript : MonoBehaviour
     }
     public void LoadCorrectScene()
     {
-        if (PlayerPrefs.GetInt("levelIndex", 0) < 1) PlayerPrefs.SetInt("levelIndex", 1);
+        if (PlayerPrefs.GetInt("levelindex", 0) < 1) PlayerPrefs.SetInt("levelindex", 1);
         SceneManager.sceneLoaded -= LoadCheckpointData;
         SceneManager.sceneLoaded -= ChangePlayText;
         SceneManager.sceneLoaded += LoadCheckpointData;
         SceneManager.sceneLoaded += ChangePlayText;
-        SceneManager.LoadScene(PlayerPrefs.GetInt("levelIndex"));
+        SceneManager.LoadScene(PlayerPrefs.GetInt("levelindex"));
     }
     private void ChangePlayText(Scene scene, LoadSceneMode mode)
     {
@@ -167,10 +170,11 @@ public class ButtonLoaderScript : MonoBehaviour
             player = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
             prs = player.GetComponent<PlayerResetScript>();
             int checkpointNum = PlayerPrefs.GetInt("checkpoint");
-            // if the player has never played
+        // if the player has never played this level
             if (checkpointNum < 1)
             {
                 prs.HardResetChar();
+                prs.ResetTimerValue();
             }
             else
             {
@@ -211,7 +215,7 @@ public class ButtonLoaderScript : MonoBehaviour
     {
         Slider gravitySlider = menus[currentMenuIndex_Y - 1][currentMenuIndex_X - 1].transform.Find("GravitySlider").gameObject.GetComponent<Slider>();
         float gravityValue = PlayerPrefs.GetFloat("sensitivity");
-        TextMeshProUGUI gravityText = menus[0][currentMenuIndex_X - 1].transform.Find("GravityValue").gameObject.GetComponent<TextMeshProUGUI>();
+        TextMeshProUGUI gravityText = menus[GetMenuIndex(mainMenuBoard).row-1][currentMenuIndex_X - 1].transform.Find("GravityValue").gameObject.GetComponent<TextMeshProUGUI>();
 
         ClampValues(gravityValue, gravitySlider.minValue, gravitySlider.maxValue);
         PlayerPrefs.SetFloat("gravity", value);
@@ -306,7 +310,7 @@ public class ButtonLoaderScript : MonoBehaviour
         value = value < min ? min : value;
         value = value > max ? max : value;
     }
-    private static (int row, int col) GetMenuIndex(GameObject menu)
+    public static (int row, int col) GetMenuIndex(GameObject menu)
     {
         return (int.Parse(menu.name[^2] + ""), int.Parse(menu.name[^1] + ""));
     }

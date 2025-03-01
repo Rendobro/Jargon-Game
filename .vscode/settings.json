@@ -59,6 +59,7 @@
     "dotnet.defaultSolution": "Jargon.sln",
     "cSpell.words": [
         "Behaviour",
+        "highscore",
         "Lerp",
         "levelindex",
         "Mathf",

@@ -13,7 +13,7 @@ public class MouseScript : MonoBehaviour
     {
         // Collect sensitivity from player's settings
         sensitivity = PlayerPrefs.GetFloat("sensitivity");
-        Cursor.lockState = CursorLockMode.Locked;
+        LockCursor();
     }
 
     void Update()
@@ -33,6 +33,16 @@ public class MouseScript : MonoBehaviour
 
         transform.localRotation = Quaternion.Euler(xRot, 0f, 0f);
         player.transform.Rotate(Vector3.up * mouseX);
+    }
+
+    public static void UnlockCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+    }
+
+    public static void LockCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
     }
 
     public void DisableRotation()

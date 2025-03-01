@@ -9,6 +9,9 @@ TagManager:
   - MenuBoard
   - Slider
   - Environment
+  - LevelFinish
+  - SceneLoader
+  - HighScoreText
   layers:
   - Default
   - TransparentFX

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class PlayerResetScript : MonoBehaviour
 {
@@ -13,13 +14,15 @@ public class PlayerResetScript : MonoBehaviour
     [SerializeField] private Rigidbody rb;
     [SerializeField] private Camera cam;
     [SerializeField] private TextMeshProUGUI timerText;
+    private int levelIndex;
     private float timer = 0f;
     private bool timerPaused = false;
     private bool timerToggledOn = true;
     void Start()
     {
-        timer = PlayerPrefs.GetFloat("timer");
-    } 
+        levelIndex = SceneManager.GetActiveScene().buildIndex;
+        timer = PlayerPrefs.GetFloat("timer"+levelIndex);
+    }
     void Update()
     {
         ManageTimer();
@@ -28,15 +31,16 @@ public class PlayerResetScript : MonoBehaviour
     {
         timerToggledOn = !timerToggledOn;
         RectTransform _tTimer = timerText.rectTransform;
-        _tTimer.anchoredPosition = _tTimer.anchoredPosition.Equals(new Vector2(0,625)) ? new Vector3(0,625 * (timerToggledOn ? 1: 2),0) : new Vector2(0,625);
+        _tTimer.anchoredPosition = _tTimer.anchoredPosition.Equals(new Vector2(0, 625)) ? new Vector3(0, 625 * (timerToggledOn ? 1 : 2), 0) : new Vector2(0, 625);
     }
     public void PauseUnpauseTimer()
     {
         timerPaused = !timerPaused;
+        PlayerPrefs.SetFloat("timer"+levelIndex, timer);
     }
     private void ManageTimer()
     {
-        if (!timerPaused) 
+        if (!timerPaused)
         {
             timer += Time.deltaTime;
             if (timerToggledOn) ChangeTimerText();
@@ -47,17 +51,29 @@ public class PlayerResetScript : MonoBehaviour
     {
         return timer;
     }
-    private void ChangeTimerText()
+    public void ResetTimerValue()
     {
-        int numHours = (int)Mathf.Floor(timer / 3600);
-            
+        timer = 0;
+        PlayerPrefs.SetFloat("timer"+levelIndex, 0f);
+    }
+
+    public static string FormatTimer(float seconds)
+    {
+        int numHours = (int)Mathf.Floor(seconds / 3600);
+
         string additionalSegment = "";
         if (numHours > 0) additionalSegment = numHours.ToString("D2") + ":";
+        
+        string formattedTimer = additionalSegment
+        + ((int)Mathf.Floor((seconds - numHours * 3600f) / 60f)).ToString("D2") + ":"
+        + ((int)(seconds % 60f)).ToString("D2") + ":"
+        + ((int)(seconds % 1f * 1000)).ToString("D3");
+        return formattedTimer;
+    }
 
-        timerText.text = additionalSegment 
-        + ((int)Mathf.Floor((timer - numHours * 3600f) / 60f)).ToString("D2") + ":" 
-        + ((int)(timer % 60f)).ToString("D2") + ":" 
-        + ((int)(timer % 1f * 1000)).ToString("D3");
+    private void ChangeTimerText()
+    {
+        timerText.text = FormatTimer(timer);
     }
     public void ResetChar()
     {
@@ -91,8 +107,9 @@ public class PlayerResetScript : MonoBehaviour
     public void HardResetChar()
     {
         timer = 0;
+        PlayerPrefs.SetFloat("timer"+levelIndex, 0f);
 
-        PlayerPrefs.SetInt("checkpoint",0);
+        PlayerPrefs.SetInt("checkpoint", 0);
 
         ctrl.enabled = false;
         transform.SetPositionAndRotation(worldSpawn.position, worldSpawn.rotation);

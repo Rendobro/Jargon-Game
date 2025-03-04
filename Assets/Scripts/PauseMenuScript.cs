@@ -32,7 +32,6 @@ public class PauseMenuScript : MonoBehaviour
     public void QuitGame()
     {
         // remember to save game before this happens
-        prs.PauseUnpauseTimer();
         PlayerPrefs.SetFloat("timer",prs.GetTimerValue());
         Application.Quit();
     }
@@ -49,7 +48,7 @@ public class PauseMenuScript : MonoBehaviour
     {
         int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
         PlayerPrefs.SetInt("levelindex",currentSceneIndex);
-        Cursor.lockState = CursorLockMode.None;
+        MouseScript.UnlockCursor();
         if (currentSceneIndex != titleScreenIndex) SceneManager.LoadScene(titleScreenIndex);
     }
 
@@ -59,7 +58,7 @@ public class PauseMenuScript : MonoBehaviour
         prs.PauseUnpauseTimer();
         moveCS.DisableMovement();
         mouseCS.DisableRotation();
-        Cursor.lockState = CursorLockMode.None;
+        MouseScript.UnlockCursor();
     }
 
     private void ClosePauseMenu()
@@ -69,7 +68,7 @@ public class PauseMenuScript : MonoBehaviour
         prs.PauseUnpauseTimer();
         moveCS.EnableMovement();
         mouseCS.EnableRotation();
-        Cursor.lockState = CursorLockMode.Locked;
+        MouseScript.LockCursor();
     }
 
     private IEnumerator SlowMovePosition(Vector3 startPosition, Vector3 endPosition, float duration)

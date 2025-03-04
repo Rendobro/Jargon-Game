@@ -11,6 +11,8 @@ public class ButtonLoaderScript : MonoBehaviour
 {
     [SerializeField] private float menuTransitionDuration = 1.6f;
     [SerializeField] private GameObject mainMenuBoard;
+    [SerializeField] private readonly int numLevels;
+    private LevelFinishScript lfs;
     private static int currentMenuIndex_X;
     private static int currentMenuIndex_Y;
     private GameObject[][] menus;
@@ -21,10 +23,8 @@ public class ButtonLoaderScript : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        currentMenuIndex_Y = GetMenuIndex(mainMenuBoard).row;
-        currentMenuIndex_X = GetMenuIndex(mainMenuBoard).col;
-        playText = GameObject.Find("MenuBoard11").GetComponentInChildren<Button>().gameObject.GetComponentInChildren<TextMeshProUGUI>();
         InitializeMenus();
+        InitializeHighScores();
         InitializeSliders();
     }
     void Update()
@@ -69,16 +69,8 @@ public class ButtonLoaderScript : MonoBehaviour
                     readyToMove[i][j] = false;
                     Transform[] transforms = menus[i][j].GetComponentsInChildren<Transform>();
                     Transform mup = transforms.FirstOrDefault(t => t.gameObject.name.Equals("MenuUpPosition" + (i + 1) + (j + 1)));
-                    if (mup != null)
-                    {
-                        StartCoroutine(SlowMovePosition(_t.position, mup.position, menuTransitionDuration, (i, j)));
-                    }
-                    else
-                    {
-                        Debug.LogError($"MenuUpPosition{i + 1}{j + 1} not found");
-                        readyToMove[i][j] = true; // Reset readyToMove if mup is null
-                    }
-
+                    
+                    StartCoroutine(SlowMovePosition(_t.position, mup.position, menuTransitionDuration, (i, j)));
                 }
                 else
                 {
@@ -165,11 +157,12 @@ public class ButtonLoaderScript : MonoBehaviour
     private void LoadCheckpointData(Scene scene, LoadSceneMode mode)
     {
         // if the loaded scene is the scene where the player has last left off
-        if (scene.name.Equals(SceneManager.GetSceneByBuildIndex(PlayerPrefs.GetInt("levelindex")).name))
+        if (scene.name.Equals(SceneManager.GetSceneByBuildIndex(PlayerPrefs.GetInt("recentlevel")).name))
         {
             player = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
             prs = player.GetComponent<PlayerResetScript>();
             int checkpointNum = PlayerPrefs.GetInt("checkpoint");
+            
         // if the player has never played this level
             if (checkpointNum < 1)
             {
@@ -220,7 +213,7 @@ public class ButtonLoaderScript : MonoBehaviour
         ClampValues(gravityValue, gravitySlider.minValue, gravitySlider.maxValue);
         PlayerPrefs.SetFloat("gravity", value);
 
-        gravityText.text = Mathf.Round(value).ToString();
+        gravityText.text = value.ToString("F2");
     }
 
     public void SetMenuSpeed(float value)
@@ -236,10 +229,17 @@ public class ButtonLoaderScript : MonoBehaviour
     }
     private void InitializeMenus()
     {
+        currentMenuIndex_Y = GetMenuIndex(mainMenuBoard).row;
+        currentMenuIndex_X = GetMenuIndex(mainMenuBoard).col;
+
+        playText = mainMenuBoard.GetComponentInChildren<Button>().gameObject.GetComponentInChildren<TextMeshProUGUI>();
+
         GameObject[] allMenus = GameObject.FindGameObjectsWithTag("MenuBoard");
         int maxRow = allMenus.Max(m => GetMenuIndex(m).row);
+
         (int row, int col)[] rowsAndCols = allMenus.Select(m => GetMenuIndex(m)).ToArray();
         Dictionary<int, int> rowColumnCounts = new();
+
         for (int i = 0; i < allMenus.Length; i++)
         {
             int currentRow = rowsAndCols[i].row;
@@ -247,21 +247,22 @@ public class ButtonLoaderScript : MonoBehaviour
             if (rowColumnCounts.ContainsKey(currentRow)) rowColumnCounts[currentRow]++;
             else rowColumnCounts.Add(currentRow, 1);
         }
+
         menus = new GameObject[maxRow][];
         foreach (var kvp in rowColumnCounts)
         {
             menus[kvp.Key - 1] = new GameObject[kvp.Value];
         }
+
         readyToMove = new bool[maxRow][];
         for (int i = 0; i < maxRow; i++)
         {
             int itemsInRow = rowColumnCounts[i + 1];
             readyToMove[i] = new bool[itemsInRow];
-            for (int j = 0; j < itemsInRow; j++)
-            {
-                readyToMove[i][j] = true;
-            }
+
+            for (int j = 0; j < itemsInRow; j++) readyToMove[i][j] = true;
         }
+
         for (int i = 0; i < allMenus.Length; i++)
         {
             (int currentRow, int currentCol) = rowsAndCols[i];
@@ -298,20 +299,60 @@ public class ButtonLoaderScript : MonoBehaviour
             }
         }
     }
+
+    private void InitializeHighScores()
+    {
+        GameObject[] highScoreTexts = GameObject.FindGameObjectsWithTag("HighScoreText");
+
+            if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
+            for (int i = 0; i < highScoreTexts.Length; i++)
+            {
+                GameObject textObj = highScoreTexts[i];
+
+                if (textObj != null)
+                {
+                    int highScoreIndex = GetHighScoreTextIndex(textObj);
+                    textObj.GetComponent<TextMeshProUGUI>().text = PlayerPrefs.HasKey("highscore" + highScoreIndex) ? PlayerResetScript.FormatTimer(PlayerPrefs.GetFloat("highscore" + highScoreIndex)) : "N/A" ;
+                }
+            }
+    }
     public void QuitGame()
     {
         // remember to save game before this happens
         Debug.Log("Quitted Game");
         Application.Quit();
     }
-    
+
+    [ContextMenu("Reset High Scores")]
+    public void ResetHighScores()
+    {
+        GameObject[] highScoreTexts = GameObject.FindGameObjectsWithTag("HighScoreText");
+
+            if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
+            for (int i = 0; i < highScoreTexts.Length; i++)
+            {
+                GameObject textObj = highScoreTexts[i];
+                if (textObj != null)
+                {
+                    PlayerPrefs.DeleteKey("highscore"+(i+1));
+                    textObj.GetComponent<TextMeshProUGUI>().text = "N/A";
+                }
+            }
+    }
+
     private void ClampValues(float value, float min, float max)
     {
         value = value < min ? min : value;
         value = value > max ? max : value;
     }
+
     public static (int row, int col) GetMenuIndex(GameObject menu)
     {
         return (int.Parse(menu.name[^2] + ""), int.Parse(menu.name[^1] + ""));
+    }
+
+    private static int GetHighScoreTextIndex(GameObject highScoreText)
+    {
+        return int.Parse(highScoreText.name[^1].ToString());
     }
 }

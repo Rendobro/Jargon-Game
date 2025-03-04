@@ -25,6 +25,7 @@ public class PlayerResetScript : MonoBehaviour
     }
     void Update()
     {
+        ResetChecks();
         ManageTimer();
     }
     public void ToggleTimerVisibility()
@@ -52,6 +53,11 @@ public class PlayerResetScript : MonoBehaviour
         return timer;
     }
     public void ResetTimerValue()
+    {
+        timer = 0;
+        PlayerPrefs.SetFloat("timer"+levelIndex, 0f);
+    }
+    public void ResetTimerValue(int levelIndex)
     {
         timer = 0;
         PlayerPrefs.SetFloat("timer"+levelIndex, 0f);
@@ -118,5 +124,17 @@ public class PlayerResetScript : MonoBehaviour
         cam.transform.rotation = worldSpawn.rotation;
         moveCS.ResetVelocityVertical();
         vs.ChangeCheckpoint(worldSpawn.position);
+    }
+
+    private void ResetChecks()
+    {
+        if (Input.GetButtonDown("Reset"))
+        {
+            ResetChar(transform);
+        }
+        if (Input.GetButtonDown("HardReset"))
+        {
+            HardResetChar();
+        }
     }
 }

@@ -3,8 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using Unity.Netcode;
-public class MovementScript : NetworkBehaviour
+public class MovementScript : MonoBehaviour
 {
     [SerializeField] private CharacterController ctrl;
     [SerializeField] private Transform sphereLoc;
@@ -14,7 +13,7 @@ public class MovementScript : NetworkBehaviour
     [SerializeField] private float speed = 5;
     [SerializeField] private readonly float checkSphereRadius = 0.5f;
     [SerializeField] private readonly short defaultGravity = 30;
-    public float gravity;
+    private float gravity;
     private Vector3 velocity;
     private bool isGrounded;
     private bool isDisabled = false;

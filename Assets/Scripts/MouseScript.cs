@@ -1,18 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 public class MouseScript : MonoBehaviour
 {
-    public Transform player;
-    public float sensitivity;
+    [SerializeField] private Transform _tPlayer;
+    [SerializeField] private readonly float defaultSensitivity = 150f;
+    private float sensitivity;
     private float xRot = 0f;
     private bool isDisabled = false;
 
     void Start()
     {
         // Collect sensitivity from player's settings
-        sensitivity = PlayerPrefs.GetFloat("sensitivity");
+        sensitivity = PlayerPrefs.GetFloat("sensitivity",defaultSensitivity);
         LockCursor();
     }
 
@@ -32,7 +32,7 @@ public class MouseScript : MonoBehaviour
         xRot = Mathf.Clamp(xRot,-90,90); //Clamp Vertical Rotation
 
         transform.localRotation = Quaternion.Euler(xRot, 0f, 0f);
-        player.transform.Rotate(Vector3.up * mouseX);
+        _tPlayer.transform.Rotate(Vector3.up * mouseX);
     }
 
     public static void UnlockCursor()

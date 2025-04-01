@@ -1,56 +1,46 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using psm = PlayerStatsManager;
+using cm = CheckpointManager;
+using prm = PlayerResetManager;
+using tm = TimerManager;
 public class LevelFinishScript : MonoBehaviour
 {
-    [SerializeField] private MovementScript moveCS;
-    [SerializeField] private PlayerResetScript prs;
-    [SerializeField] private MouseScript mouseCS;
-    private int lastBuildIndex = 0;
-    private readonly int mainMenuBuildIndex = 0;
+    public static event Action<int> OnLevelFinish;
+    private int finishedLevelIndex;
+    private const int mainMenuBuildIndex = 0;
     private bool gameWon = false;
-    void Start()
+
+    private void OnEnable()
     {
-        PlayerPrefs.SetInt("recentlevel", SceneManager.GetActiveScene().buildIndex);
         SceneManager.sceneLoaded += ChangeHighScoreText;
     }
 
-    void Update()
+    private void OnDisable()
     {
-
+        SceneManager.sceneLoaded -= ChangeHighScoreText;
     }
 
     private void OnTriggerEnter(Collider hit)
     {
         if (hit.CompareTag("Player"))
         {
+            finishedLevelIndex = SceneManager.GetActiveScene().buildIndex;
+            OnLevelFinish?.Invoke(finishedLevelIndex);
+
             gameWon = true;
-            int bIndex = SceneManager.GetActiveScene().buildIndex;
-            moveCS.DisableMovement();
-            MouseScript.UnlockCursor();
 
-            //includes timer saving
-            prs.PauseUnpauseTimer();
+            if (!string.IsNullOrEmpty(SceneUtility.GetScenePathByBuildIndex(finishedLevelIndex + 1)))
+            psm.Instance.SetLastUnlockedLevelIndex(finishedLevelIndex + 1);
 
-            // save data to file here
-
-            if (!string.IsNullOrEmpty(SceneUtility.GetScenePathByBuildIndex(bIndex + 1)))
-            {
-                if (PlayerPrefs.GetInt("levelindex") <= bIndex)
-                PlayerPrefs.SetInt("levelindex", PlayerPrefs.GetInt("levelindex") + 1);
-                lastBuildIndex = bIndex + 1;
-            }
-            else
-            {
-                lastBuildIndex = bIndex;
-            }
-            PlayerPrefs.SetInt("checkpoint", 0);
+            Debug.Log("Current Last Unlocked Level: "+psm.Instance.GetLastUnlockedLevelIndex());
 
             SceneManager.LoadScene(mainMenuBuildIndex);
-            //Debug.Log($" buildIndex after {SceneManager.GetActiveScene().buildIndex} ; buildIndex Stored {lastBuildIndex} ; is buildPath there {!string.IsNullOrEmpty(SceneUtility.GetScenePathByBuildIndex(SceneManager.GetActiveScene().buildIndex + 1))}");
         }
     }
 
@@ -61,32 +51,31 @@ public class LevelFinishScript : MonoBehaviour
             gameWon = false;
             GameObject[] highScoreTexts = GameObject.FindGameObjectsWithTag("HighScoreText");
 
-            if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
+            if (highScoreTexts == null) 
+            { 
+                Debug.LogError("No High Score Texts Available"); 
+                return; 
+            }
             for (int i = 0; i < highScoreTexts.Length; i++)
             {
                 GameObject textObj = highScoreTexts[i];
                 if (textObj != null)
                 {
                     int highScoreIndex = GetHighScoreTextIndex(textObj);
-                    if (highScoreIndex <= lastBuildIndex && PlayerPrefs.HasKey("timer" + highScoreIndex))
+                    if (highScoreIndex <= psm.Instance.GetLastUnlockedLevelIndex())
                     {
-                        float seconds = PlayerPrefs.GetFloat("timer" + highScoreIndex);
-                        Debug.Log($"1 hsi: {highScoreIndex} ; current score: {seconds} ; has key {PlayerPrefs.HasKey("highscore"+highScoreIndex)} ; stored highscore: {PlayerPrefs.GetFloat("highscore" + highScoreIndex)}");
-                        if (seconds > 1f && seconds < ((PlayerPrefs.GetFloat("highscore" + highScoreIndex) != 0) ? PlayerPrefs.GetFloat("highscore" + highScoreIndex) : float.MaxValue ))
+                        float seconds = tm.Instance.GetTimerValue(finishedLevelIndex);
+                        float previousHighscore = psm.Instance.GetHighscore(highScoreIndex);
+                        if (seconds > 1f && seconds < ((previousHighscore != 0) ? previousHighscore : float.MaxValue ))
                         {
-                            textObj.GetComponent<TextMeshProUGUI>().text = PlayerResetScript.FormatTimer(seconds);
-                            PlayerPrefs.SetFloat("highscore" + highScoreIndex, seconds);
-                            PlayerPrefs.DeleteKey("timer" + highScoreIndex);
+                            textObj.GetComponent<TextMeshProUGUI>().text = tm.Instance.FormatTimer(seconds);
+                            psm.Instance.SetHighscore(highScoreIndex,seconds);
                         }
                         else if (seconds <= 1f && !textObj.GetComponent<TextMeshProUGUI>().text.Equals("N/A"))
                         {
                             textObj.GetComponent<TextMeshProUGUI>().text = "N/A";
                         }
-                        else if (!PlayerPrefs.HasKey("highscore" + highScoreIndex))
-                        {
-                            PlayerPrefs.SetFloat("highscore", float.MaxValue);
-                        }
-                        prs.ResetTimerValue(highScoreIndex);
+                        tm.Instance.ResetTimerValue(highScoreIndex);
                     }
                 }
             }
@@ -94,8 +83,5 @@ public class LevelFinishScript : MonoBehaviour
         }
     }
 
-    private static int GetHighScoreTextIndex(GameObject highScoreText)
-    {
-        return int.Parse(highScoreText.name[^1].ToString());
-    }
+    private static int GetHighScoreTextIndex(GameObject highScoreText) => int.Parse(highScoreText.name[^1].ToString());
 }

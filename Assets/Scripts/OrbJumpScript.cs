@@ -1,23 +1,25 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class OrbJumpScript : MonoBehaviour
 {
-    public MovementScript moveCS;
+    public static event Action OnJumpOrbActivated;
+    [SerializeField] MovementScript msPlayer;
     private bool ableToJump = false;
 
     void Update()
     {
-        if (!moveCS.IsPlayerGrounded() && Input.GetButtonDown("Jump"))
+        if (!msPlayer.IsPlayerGrounded() && Input.GetButtonDown("Jump"))
         {
             ableToJump = true;
         }
-        else if (moveCS.IsPlayerGrounded() && Input.GetKeyDown(KeyCode.Space))
+        else if (msPlayer.IsPlayerGrounded() && Input.GetKeyDown(KeyCode.Space))
         {
             ableToJump = true;
         }
-        else if (moveCS.IsPlayerGrounded())
+        else if (msPlayer.IsPlayerGrounded())
         {
             ableToJump = false;
         }
@@ -28,7 +30,7 @@ public class OrbJumpScript : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.E) && Input.GetKey(KeyCode.Y) && Input.GetKey(KeyCode.L) && Input.GetKey(KeyCode.Q))
         {
-            moveCS.Jump();
+            OnJumpOrbActivated?.Invoke();
         }
     }
     private void OnTriggerStay(Collider hit) 
@@ -36,7 +38,7 @@ public class OrbJumpScript : MonoBehaviour
         if (hit.gameObject.layer == 6 && Input.GetButton("Jump") && ableToJump)
         {
             ableToJump = false;
-            moveCS.Jump();
+            OnJumpOrbActivated?.Invoke();
         }
     }
 }

@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using psm = PlayerStatsManager;
+using lfs = LevelFinishScript;
+using ojs = OrbJumpScript;
+using prm = PlayerResetManager;
+using pms = PauseMenuScript;
 public class MovementScript : MonoBehaviour
 {
     [SerializeField] private CharacterController ctrl;
@@ -12,34 +17,42 @@ public class MovementScript : MonoBehaviour
     [SerializeField] private float jumpPower = 5;
     [SerializeField] private float speed = 5;
     [SerializeField] private readonly float checkSphereRadius = 0.5f;
-    [SerializeField] private readonly short defaultGravity = 30;
-    private float gravity;
+    private static float gravity;
     private Vector3 velocity;
     private bool isGrounded;
     private bool isDisabled = false;
 
-    void Start()
+    private void OnEnable()
+    {     
+        gravity = psm.Instance.GetGravity();
+        lfs.OnLevelFinish += DisableMovement;
+        prm.OnPlayerReset += ResetVelocityVertical;
+        ojs.OnJumpOrbActivated += Jump;
+        pms.OnMenuPaused += DisableMovement;
+        pms.OnMenuUnpaused += EnableMovement;
+    }
+
+    private void OnDisable()
     {
-        //if (!IsOwner) Destroy(this);
-        gravity = -PlayerPrefs.GetFloat("gravity",defaultGravity);
+        lfs.OnLevelFinish -= DisableMovement;
+        prm.OnPlayerReset -= ResetVelocityVertical;
+        ojs.OnJumpOrbActivated -= Jump;
+        pms.OnMenuPaused -= DisableMovement;
+        pms.OnMenuUnpaused -= EnableMovement;
     }
     void FixedUpdate()
     {
         if (isDisabled) return;
-        isGrounded = Physics.CheckSphere(sphereLoc.position, checkSphereRadius, groundMask);
+        GroundCheck();
         if (isGrounded && velocity.y < 0)
         {
+            
             velocity.y = -2f;
         }
 
         MoveDetector();
-        if (Input.GetButton("Jump") && isGrounded)
-        {
-            Jump();
-        }
-        velocity.y += gravity * Time.deltaTime;
-        velocity.y = Mathf.Min(velocity.y,terminalVelocity);
-        ctrl.Move(velocity * Time.deltaTime);
+        JumpDetector();
+        HandleVerticalVelocity();
     }
 
     private void MoveDetector()
@@ -54,41 +67,34 @@ public class MovementScript : MonoBehaviour
         ctrl.Move(speed * Time.deltaTime * moveDirection);
     }
 
-    public void Jump()
-    {
-        velocity.y = Mathf.Sqrt(Mathf.Abs(2 * gravity * jumpPower));
-    }
+    private void JumpDetector() { if (Input.GetButton("Jump") && isGrounded) Jump(); }
 
-    public void ChangeVelocityVertical(float speed)
-    {
-        velocity.y = speed;
-    }
+    private void GroundCheck() => isGrounded = Physics.CheckSphere(sphereLoc.position, checkSphereRadius, groundMask);
 
-    public void ResetVelocityVertical()
+    private void HandleVerticalVelocity()
     {
-        velocity.y = 0f;
+        velocity.y += gravity * Time.deltaTime;
+        velocity.y = Mathf.Min(velocity.y,terminalVelocity);
+        ctrl.Move(velocity * Time.deltaTime);
     }
+    private void Jump() => velocity.y = Mathf.Sqrt(Mathf.Abs(2 * gravity * jumpPower));
 
-    public void DisableMovement()
-    {
-        isDisabled = true;
-    }
-    public void EnableMovement()
-    {
-        isDisabled = false;
-    }
-    public bool IsPlayerGrounded()
-    {
-        return isGrounded;
-    }
+    public void ChangeVelocityVertical(float speed) => velocity.y = speed;
 
-    public void ChangeSpeed(float newSpeed)
-    {
-        speed = newSpeed;
-    }
-    public void ChangeJumpPower(float newJumpPower)
-    {
-        jumpPower = newJumpPower;
-    }
+    private void ResetVelocityVertical() => velocity.y = 0f;
+
+    private void DisableMovement(int _) => isDisabled = true;
+
+    private void DisableMovement() => isDisabled = true;
+
+    private void EnableMovement() => isDisabled = false;
+
+    public bool IsPlayerGrounded() => isGrounded;
+
+    public void ChangeSpeed(float newSpeed) => speed = newSpeed;
+
+    public void ChangeJumpPower(float newJumpPower) => jumpPower = newJumpPower;
+
+    public static void SetGravity(float gravNew) => gravity = gravNew;
 }
 

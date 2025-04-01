@@ -3,33 +3,57 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using psm = PlayerStatsManager;
+using prm = PlayerResetManager;
+using cm = CheckpointManager;
+using tm = TimerManager;
+using dpm = DataPersistenceManager;
 public class ButtonLoaderScript : MonoBehaviour
 {
-    [SerializeField] private float menuTransitionDuration = 1.6f;
+    [Header("Initialized Values")]
+    public const ushort numLevels = 25;
+    private const float standardGravity = 30f;
+    private float menuTransitionDuration;
+
+    [Header("Menu Instance Data")]
+    [SerializeField] private Toggle gravityToggle;
     [SerializeField] private GameObject mainMenuBoard;
-    [SerializeField] private readonly int numLevels;
-    private LevelFinishScript lfs;
+    private TextMeshProUGUI playText;
     private static int currentMenuIndex_X;
     private static int currentMenuIndex_Y;
     private GameObject[][] menus;
-    private CharacterController player;
-    private PlayerResetScript prs;
-    private TextMeshProUGUI playText;
     private bool[][] readyToMove;
-    // Start is called before the first frame update
-    void Start()
+
+    private void Update()
+    {
+        // if (dpm.Instance != null && !dpm.Instance.HasGameData()) 
+        // {
+        //     dpm.Instance.NewGame();
+        // }
+    }
+    private void OnEnable()
+    {
+        if (dpm.Instance != null && !dpm.Instance.HasGameData()) 
+        {
+            dpm.Instance.NewGame();
+        }
+        SceneManager.sceneLoaded += LoadCheckpointData;
+        SceneManager.sceneLoaded += ChangePlayText;
+    }
+
+    private void OnDisable()
+    {
+        SceneManager.sceneLoaded -= LoadCheckpointData;
+        SceneManager.sceneLoaded -= ChangePlayText;
+    }
+    private void Start()
     {
         InitializeMenus();
         InitializeHighScores();
-        InitializeSliders();
-    }
-    void Update()
-    {
-        menuTransitionDuration = PlayerPrefs.GetFloat("menuspeed");
+        InitializeSettings();
     }
     public void BringSettingsMenuLeft()
     {
@@ -69,7 +93,7 @@ public class ButtonLoaderScript : MonoBehaviour
                     readyToMove[i][j] = false;
                     Transform[] transforms = menus[i][j].GetComponentsInChildren<Transform>();
                     Transform mup = transforms.FirstOrDefault(t => t.gameObject.name.Equals("MenuUpPosition" + (i + 1) + (j + 1)));
-                    
+
                     StartCoroutine(SlowMovePosition(_t.position, mup.position, menuTransitionDuration, (i, j)));
                 }
                 else
@@ -131,50 +155,49 @@ public class ButtonLoaderScript : MonoBehaviour
         if (incrementOkay)
             currentMenuIndex_X--;
     }
-    public void LoadSpecificScene(int sceneIndex)
+    public void LoadSpecificLevel(int levelIndex)
     {
-        SceneManager.sceneLoaded -= LoadCheckpointData;
-        SceneManager.sceneLoaded -= ChangePlayText;
-        SceneManager.sceneLoaded += LoadCheckpointData;
-        SceneManager.sceneLoaded += ChangePlayText;
-        SceneManager.LoadScene(sceneIndex);
+        SceneManager.LoadScene(levelIndex);
     }
-    public void LoadCorrectScene()
+    public void OnPlayButtonClicked()
     {
-        if (PlayerPrefs.GetInt("levelindex", 0) < 1) PlayerPrefs.SetInt("levelindex", 1);
-        SceneManager.sceneLoaded -= LoadCheckpointData;
-        SceneManager.sceneLoaded -= ChangePlayText;
-        SceneManager.sceneLoaded += LoadCheckpointData;
-        SceneManager.sceneLoaded += ChangePlayText;
-        SceneManager.LoadScene(PlayerPrefs.GetInt("levelindex"));
+        Debug.Log("Man, that play button be getting pressed bruh");
+        SceneManager.LoadScene(psm.Instance.GetRecentLevelIndex());
     }
     private void ChangePlayText(Scene scene, LoadSceneMode mode)
     {
-        PlayerPrefs.SetInt("playtext", 1);
-        playText.text = "Continue Playing!";
-        playText.fontSize = 20;
+        if (scene.buildIndex != psm.mainMenuIndex)
+        {
+            if (playText != null)
+            {
+                playText.text = "Continue Playing!";
+                playText.fontSize = 20;
+            }
+            else
+            {
+                Debug.LogError("playText is not assigned.");
+            }
+        }
     }
     private void LoadCheckpointData(Scene scene, LoadSceneMode mode)
     {
         // if the loaded scene is the scene where the player has last left off
-        if (scene.name.Equals(SceneManager.GetSceneByBuildIndex(PlayerPrefs.GetInt("recentlevel")).name))
+        if (scene.buildIndex != psm.mainMenuIndex)
         {
-            player = GameObject.FindGameObjectWithTag("Player").GetComponent<CharacterController>();
-            prs = player.GetComponent<PlayerResetScript>();
-            int checkpointNum = PlayerPrefs.GetInt("checkpoint");
-            
-        // if the player has never played this level
+            int checkpointNum = cm.Instance.GetCheckpointNum(scene.buildIndex);
+
+            // if the player has never played this level
             if (checkpointNum < 1)
             {
-                prs.HardResetChar();
-                prs.ResetTimerValue();
+                prm.Instance.HardResetChar();
+                tm.Instance.ResetTimerValue(scene.buildIndex);
             }
             else
             {
-                // sets the player's position to their saved checkpoint's position, including no checkpoint
-                Vector3 playerSavedPosition = GameObject.FindGameObjectWithTag("Environment").transform.Find("Checkpoint" + checkpointNum).position;
+                // Resets player to their saved checkpoint's position, including no checkpoints
+                Transform playerSavedTransform = GameObject.FindGameObjectWithTag("Environment").transform.Find("Checkpoint" + checkpointNum) ?? GameObject.FindGameObjectWithTag("InitialCheckpoint").transform;
 
-                prs.ResetChar(playerSavedPosition);
+                prm.Instance.ResetChar(playerSavedTransform);
             }
         }
     }
@@ -195,36 +218,37 @@ public class ButtonLoaderScript : MonoBehaviour
     }
     public void SetSensitivity(float value)
     {
-        Slider sensitivitySlider = menus[currentMenuIndex_Y - 1][currentMenuIndex_X - 1].transform.Find("SensitivitySlider").gameObject.GetComponent<Slider>();
-        float sensitivityValue = PlayerPrefs.GetFloat("sensitivity");
-        TextMeshProUGUI sensitivityText = menus[currentMenuIndex_Y - 1][currentMenuIndex_X - 1].transform.Find("SensitivityValue").gameObject.GetComponent<TextMeshProUGUI>();
+        Slider sensitivitySlider = menus[1][1].transform.Find("SensitivitySlider").gameObject.GetComponent<Slider>();
+        TextMeshProUGUI sensitivityText = menus[1][1].transform.Find("SensitivityValue").gameObject.GetComponent<TextMeshProUGUI>();
 
-        ClampValues(sensitivityValue, sensitivitySlider.minValue, sensitivitySlider.maxValue);
-        PlayerPrefs.SetFloat("sensitivity", value);
+        ClampValues(ref value, sensitivitySlider.minValue, sensitivitySlider.maxValue);
+        psm.Instance.SetSensitivity(value);
 
+        sensitivitySlider.value = value;
         sensitivityText.text = Mathf.Round(value).ToString();
     }
     public void SetGravity(float value)
     {
-        Slider gravitySlider = menus[currentMenuIndex_Y - 1][currentMenuIndex_X - 1].transform.Find("GravitySlider").gameObject.GetComponent<Slider>();
-        float gravityValue = PlayerPrefs.GetFloat("sensitivity");
-        TextMeshProUGUI gravityText = menus[GetMenuIndex(mainMenuBoard).row-1][currentMenuIndex_X - 1].transform.Find("GravityValue").gameObject.GetComponent<TextMeshProUGUI>();
+        gravityToggle.isOn = value == 30f;
+        Slider gravitySlider = menus[1][1].transform.Find("GravitySlider").gameObject.GetComponent<Slider>();
+        TextMeshProUGUI gravityText = menus[1][1].transform.Find("GravityValue").gameObject.GetComponent<TextMeshProUGUI>();
 
-        ClampValues(gravityValue, gravitySlider.minValue, gravitySlider.maxValue);
-        PlayerPrefs.SetFloat("gravity", value);
+        ClampValues(ref value, gravitySlider.minValue, gravitySlider.maxValue);
+        psm.Instance.SetGravity(-value);
 
+        gravitySlider.value = -value;
         gravityText.text = value.ToString("F2");
     }
 
-    public void SetMenuSpeed(float value)
+    public void SetMenuTransitionDuration(float value)
     {
-        Slider menuSpeedSlider = menus[currentMenuIndex_Y - 1][currentMenuIndex_X - 1].transform.Find("MenuSpeedSlider").gameObject.GetComponent<Slider>();
-        float menuSpeedValue = PlayerPrefs.GetFloat("menuspeed");
-        TextMeshProUGUI menuSpeedText = menus[currentMenuIndex_Y - 1][currentMenuIndex_X - 1].transform.Find("MenuSpeedValue").gameObject.GetComponent<TextMeshProUGUI>();
+        Slider menuSpeedSlider = menus[1][1].transform.Find("MenuSpeedSlider").gameObject.GetComponent<Slider>();
+        TextMeshProUGUI menuSpeedText = menus[1][1].transform.Find("MenuSpeedValue").gameObject.GetComponent<TextMeshProUGUI>();
 
-        ClampValues(menuSpeedValue, menuSpeedSlider.minValue, menuSpeedSlider.maxValue);
-        PlayerPrefs.SetFloat("menuspeed", value);
+        ClampValues(ref value, menuSpeedSlider.minValue, menuSpeedSlider.maxValue);
+        psm.Instance.SetMenuTransitionDuration(value);
 
+        menuSpeedSlider.value = value;
         menuSpeedText.text = value.ToString("F2");
     }
     private void InitializeMenus()
@@ -233,6 +257,7 @@ public class ButtonLoaderScript : MonoBehaviour
         currentMenuIndex_X = GetMenuIndex(mainMenuBoard).col;
 
         playText = mainMenuBoard.GetComponentInChildren<Button>().gameObject.GetComponentInChildren<TextMeshProUGUI>();
+        playText.text = "Play";
 
         GameObject[] allMenus = GameObject.FindGameObjectsWithTag("MenuBoard");
         int maxRow = allMenus.Max(m => GetMenuIndex(m).row);
@@ -269,31 +294,43 @@ public class ButtonLoaderScript : MonoBehaviour
             menus[currentRow - 1][currentCol - 1] = allMenus[i];
         }
     }
-    private void InitializeSliders()
+    private void InitializeSettings()
     {
+        float tolerance = 0.00001f;
+        menuTransitionDuration = psm.Instance.GetMenuTransitionDuration();
+        if (psm.Instance.GetGravity() - standardGravity < tolerance) UseStandardGravity(true);
+        else gravityToggle.isOn = false;
         for (int i = 0; i < menus.Length; i++)
         {
             for (int k = 0; k < menus[i].Length; k++)
             {
+                Toggle[] valueToggle = menus[i][k].GetComponentsInChildren<Toggle>();
                 Slider[] valueSlider = menus[i][k].GetComponentsInChildren<Slider>();
                 for (int j = 0; j < valueSlider.Length; j++)
                 {
-                    string nameOfSlider = valueSlider[j].gameObject.name.Substring(0, valueSlider[j].gameObject.name.Length - 6);
-                    float value = PlayerPrefs.GetFloat(nameOfSlider.ToLower());
-                    valueSlider[j].value = value;
-                    menus[i][k].transform.Find(nameOfSlider + "Value").GetComponent<TextMeshProUGUI>().text = nameOfSlider.Equals("MenuSpeed") ? value.ToString("F2") : Mathf.Round(value).ToString();
-
+                    string nameOfSlider = valueSlider[j].gameObject.name[..^nameof(Slider).Length];
                     if (nameOfSlider.Equals("Sensitivity"))
                     {
+                        valueSlider[j].value = psm.Instance.GetSensitivity();
                         valueSlider[j].onValueChanged.AddListener(SetSensitivity);
                     }
                     else if (nameOfSlider.Equals("Gravity"))
                     {
+                        valueSlider[j].value = psm.Instance.GetGravity();
                         valueSlider[j].onValueChanged.AddListener(SetGravity);
                     }
                     else if (nameOfSlider.Equals("MenuSpeed"))
                     {
-                        valueSlider[j].onValueChanged.AddListener(SetMenuSpeed);
+                        valueSlider[j].value = psm.Instance.GetMenuTransitionDuration();
+                        valueSlider[j].onValueChanged.AddListener(SetMenuTransitionDuration);
+                    }
+                }
+                for (int j = 0; j < valueToggle.Length; j++)
+                {
+                    string nameOfToggle = valueToggle[j].gameObject.name[..^nameof(Toggle).Length];
+                    if (nameOfToggle.Equals("StandardGravity"))
+                    {
+                        valueToggle[j].onValueChanged.AddListener(UseStandardGravity);
                     }
                 }
             }
@@ -304,55 +341,45 @@ public class ButtonLoaderScript : MonoBehaviour
     {
         GameObject[] highScoreTexts = GameObject.FindGameObjectsWithTag("HighScoreText");
 
-            if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
-            for (int i = 0; i < highScoreTexts.Length; i++)
+        if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
+        for (int i = 0; i < highScoreTexts.Length; i++)
+        {
+            GameObject textObj = highScoreTexts[i];
+            if (textObj != null)
             {
-                GameObject textObj = highScoreTexts[i];
+                int highScoreIndex = GetHighScoreTextIndex(textObj);
 
-                if (textObj != null)
-                {
-                    int highScoreIndex = GetHighScoreTextIndex(textObj);
-                    textObj.GetComponent<TextMeshProUGUI>().text = PlayerPrefs.HasKey("highscore" + highScoreIndex) ? PlayerResetScript.FormatTimer(PlayerPrefs.GetFloat("highscore" + highScoreIndex)) : "N/A" ;
-                }
+                textObj.GetComponent<TextMeshProUGUI>().text =
+                psm.Instance.GetHighscore(highScoreIndex) != 0
+                ? tm.Instance.FormatTimer(psm.Instance.GetHighscore(highScoreIndex))
+                : "N/A";
             }
+        }
     }
-    public void QuitGame()
-    {
-        // remember to save game before this happens
-        Debug.Log("Quitted Game");
-        Application.Quit();
-    }
+    public void QuitGame() => Application.Quit();
 
     [ContextMenu("Reset High Scores")]
     public void ResetHighScores()
     {
         GameObject[] highScoreTexts = GameObject.FindGameObjectsWithTag("HighScoreText");
 
-            if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
-            for (int i = 0; i < highScoreTexts.Length; i++)
+        if (highScoreTexts == null) { Debug.LogError("No High Score Texts Available"); return; }
+        for (int i = 1; i <= highScoreTexts.Length; i++)
+        {
+            GameObject textObj = highScoreTexts[i];
+            if (textObj != null)
             {
-                GameObject textObj = highScoreTexts[i];
-                if (textObj != null)
-                {
-                    PlayerPrefs.DeleteKey("highscore"+(i+1));
-                    textObj.GetComponent<TextMeshProUGUI>().text = "N/A";
-                }
+                psm.Instance.SetHighscore(i, 0);
+                textObj.GetComponent<TextMeshProUGUI>().text = "N/A";
             }
+        }
     }
 
-    private void ClampValues(float value, float min, float max)
-    {
-        value = value < min ? min : value;
-        value = value > max ? max : value;
-    }
+    private void ClampValues(ref float value, float min, float max) => value = Mathf.Clamp(value, min, max);
 
-    public static (int row, int col) GetMenuIndex(GameObject menu)
-    {
-        return (int.Parse(menu.name[^2] + ""), int.Parse(menu.name[^1] + ""));
-    }
+    public void UseStandardGravity(bool checkedOn) { if (checkedOn) SetGravity(standardGravity); }
 
-    private static int GetHighScoreTextIndex(GameObject highScoreText)
-    {
-        return int.Parse(highScoreText.name[^1].ToString());
-    }
+    public static (int row, int col) GetMenuIndex(GameObject menu) => (int.Parse(menu.name[^2] + ""), int.Parse(menu.name[^1] + ""));
+
+    private static int GetHighScoreTextIndex(GameObject highScoreText) => int.Parse(highScoreText.name[^1].ToString());
 }

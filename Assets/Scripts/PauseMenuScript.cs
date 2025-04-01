@@ -2,16 +2,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using mvs = MovementScript;
+using mos = MouseScript;
+using prm = PlayerResetManager;
+using System;
+using tm = TimerManager;
+using bls = ButtonLoaderScript;
+using psm = PlayerStatsManager;
 public class PauseMenuScript : MonoBehaviour
 {
-    [SerializeField] private MovementScript moveCS;
-    [SerializeField] private MouseScript mouseCS;
-    [SerializeField] private PlayerResetScript prs;
     [SerializeField] private Transform _t;
     [SerializeField] private float pauseMenuDuration = 3;
+    public static event Action OnMenuPaused;
+    public static event Action OnMenuUnpaused;
     private bool readyToMove = true;
-    private readonly float tolerance = 0.00001f;
-    private readonly int titleScreenIndex = 0;
+    private const float tolerance = 0.00001f;
+
 
     void Start()
     {
@@ -27,12 +33,10 @@ public class PauseMenuScript : MonoBehaviour
     }
     public void ToggleTimer()
     {
-        prs.ToggleTimerVisibility();
+        tm.Instance.ToggleTimerVisibility();
     }
     public void QuitGame()
     {
-        // remember to save game before this happens
-        PlayerPrefs.SetFloat("timer",prs.GetTimerValue());
         Application.Quit();
     }
     public void TogglePauseMenu()
@@ -46,29 +50,23 @@ public class PauseMenuScript : MonoBehaviour
     }
     public void ReturnToMenu()
     {
-        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-        PlayerPrefs.SetInt("levelindex",currentSceneIndex);
-        MouseScript.UnlockCursor();
-        if (currentSceneIndex != titleScreenIndex) SceneManager.LoadScene(titleScreenIndex);
+        if (SceneManager.GetActiveScene().buildIndex != psm.mainMenuIndex) SceneManager.LoadScene(psm.mainMenuIndex);
     }
 
     private void CenterPauseMenu()
     {
+        OnMenuPaused?.Invoke();
+
         StartCoroutine(SlowMovePosition(_t.localPosition,Vector3.zero, pauseMenuDuration));
-        prs.PauseUnpauseTimer();
-        moveCS.DisableMovement();
-        mouseCS.DisableRotation();
-        MouseScript.UnlockCursor();
+        tm.Instance.PauseTimer();
     }
 
     private void ClosePauseMenu()
     {
+        OnMenuUnpaused?.Invoke();
         if (_t.localPosition.z < tolerance && _t.localPosition.y < tolerance && _t.localPosition.x < tolerance)
         StartCoroutine(SlowMovePosition(_t.localPosition,Vector3.up * 2000, pauseMenuDuration));
-        prs.PauseUnpauseTimer();
-        moveCS.EnableMovement();
-        mouseCS.EnableRotation();
-        MouseScript.LockCursor();
+        tm.Instance.UnpauseTimer();
     }
 
     private IEnumerator SlowMovePosition(Vector3 startPosition, Vector3 endPosition, float duration)

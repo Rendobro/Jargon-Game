@@ -43,8 +43,7 @@ GameObject:
   - component: {fileID: 1219896329091199806}
   - component: {fileID: 2776333626108440134}
   - component: {fileID: 6174723392803671806}
-  - component: {fileID: 8422713994078479684}
-  - component: {fileID: 5773432649532117732}
+  - component: {fileID: 3713041863494280662}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -85,7 +84,6 @@ CharacterController:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -135,8 +133,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 04844d70a49ea4f64ae52bad22ae36b4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveCS: {fileID: 3652318937500714271}
---- !u!114 &8422713994078479684
+  msPlayer: {fileID: 3652318937500714271}
+--- !u!114 &3713041863494280662
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -145,29 +143,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1628926856509203207}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a3939e089625143ffb314261936b608d, type: 3}
+  m_Script: {fileID: 11500000, guid: d96137e4aafb24a378c638ad16b25307, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  worldSpawn: {fileID: 0}
-  vs: {fileID: 0}
-  moveCS: {fileID: 3652318937500714271}
-  ctrl: {fileID: 1219896329091199806}
-  rb: {fileID: 2776333626108440134}
-  cam: {fileID: 7012339475705738937}
-  timerText: {fileID: 0}
---- !u!114 &5773432649532117732
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1628926856509203207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a457b5ac1ee7849e3824620747bec363, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  vs: {fileID: 0}
 --- !u!1 &3403233862492510484
 GameObject:
   m_ObjectHideFlags: 0
@@ -227,6 +205,9 @@ MeshRenderer:
   m_ReflectionProbeUsage: 1
   m_RayTracingMode: 2
   m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -271,7 +252,6 @@ MonoBehaviour:
     m_Bits: 8
   jumpPower: 3.5
   speed: 20
-  gravity: -17.658
 --- !u!1 &4974915068274116626
 GameObject:
   m_ObjectHideFlags: 0
@@ -369,8 +349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 524a00d44da3f48888f12a661a479f4a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 2137142611735629664}
-  sensitivity: 400
+  _tPlayer: {fileID: 2137142611735629664}
 --- !u!81 &3747789388271910096
 AudioListener:
   m_ObjectHideFlags: 0

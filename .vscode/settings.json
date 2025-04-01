@@ -59,16 +59,25 @@
     "dotnet.defaultSolution": "Jargon.sln",
     "cSpell.words": [
         "Behaviour",
+        "bruh",
+        "Collidable",
+        "Dont",
+        "grav",
         "highscore",
+        "highscores",
         "Lerp",
         "levelindex",
         "Mathf",
         "menuspeed",
+        "Nums",
+        "Platfrom",
         "playtext",
         "Prefs",
         "recentlevel",
+        "Respawn",
         "respawns",
         "Rigidbody",
+        "Speedrun",
         "UGUI"
     ]
 }

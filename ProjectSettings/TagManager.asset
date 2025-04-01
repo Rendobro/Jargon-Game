@@ -12,6 +12,8 @@ TagManager:
   - LevelFinish
   - SceneLoader
   - HighScoreText
+  - InitialCheckpoint
+  - Timer
   layers:
   - Default
   - TransparentFX

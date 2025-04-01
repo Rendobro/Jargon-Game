@@ -1,42 +1,19 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
+using cm = CheckpointManager;
 public class VoidScript : MonoBehaviour
 {
-    [SerializeField] private Transform initialCheckpoint;
-    [SerializeField] private CharacterController player;
-    [SerializeField] private PlayerResetScript prs;
-    private Transform actualCheckpoint;
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        actualCheckpoint = initialCheckpoint;
-    }
+    public static event Action<Transform> OnPlayerHitVoid;
 
     private void OnTriggerEnter(Collider hit)
     {
         if (hit.CompareTag("Player"))
         {
-            if (actualCheckpoint != null)
-            prs.ResetChar(actualCheckpoint);
-            else
-            prs.ResetChar();
+            OnPlayerHitVoid?.Invoke(hit.transform);
         }
     }
-
-    public void ChangeCheckpoint(Transform newCheckpoint)
-    {
-        if (actualCheckpoint != null) actualCheckpoint.position = newCheckpoint.position;
-    }
-    public void ChangeCheckpoint(Vector3 newCheckpointPos)
-    {
-        if (actualCheckpoint != null) actualCheckpoint.position = newCheckpointPos;
-    }
-    public Transform GetActualCheckpoint()
-    {
-        return actualCheckpoint;
-    }
+    
 }

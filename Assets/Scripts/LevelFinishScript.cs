@@ -11,7 +11,6 @@ using prm = PlayerResetManager;
 using tm = TimerManager;
 public class LevelFinishScript : MonoBehaviour
 {
-    public static event Action<int> OnLevelFinish;
     private int finishedLevelIndex;
     private const int mainMenuBuildIndex = 0;
     private bool gameWon = false;
@@ -31,7 +30,7 @@ public class LevelFinishScript : MonoBehaviour
         if (hit.CompareTag("Player"))
         {
             finishedLevelIndex = SceneManager.GetActiveScene().buildIndex;
-            OnLevelFinish?.Invoke(finishedLevelIndex);
+            EventManager.Instance.OnLevelFinish?.Invoke(finishedLevelIndex);
 
             gameWon = true;
 

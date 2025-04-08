@@ -14,8 +14,8 @@ public class MovementScript : MonoBehaviour
     [SerializeField] private Transform sphereLoc;
     [SerializeField] private LayerMask groundMask;
     [SerializeField] private readonly float terminalVelocity = 50f;
-    [SerializeField] private float jumpPower = 5;
-    [SerializeField] private float speed = 5;
+    [SerializeField] private float jumpPower = 5f;
+    [SerializeField] private float speed = 3f;
     [SerializeField] private readonly float checkSphereRadius = 0.5f;
     private static float gravity;
     private Vector3 velocity;
@@ -25,20 +25,20 @@ public class MovementScript : MonoBehaviour
     private void OnEnable()
     {     
         gravity = psm.Instance.GetGravity();
-        lfs.OnLevelFinish += DisableMovement;
-        prm.OnPlayerReset += ResetVelocityVertical;
-        ojs.OnJumpOrbActivated += Jump;
-        pms.OnMenuPaused += DisableMovement;
-        pms.OnMenuUnpaused += EnableMovement;
+        EventManager.Instance.OnLevelFinish.AddListener(DisableMovement);
+        EventManager.Instance.OnPlayerReset.AddListener(ResetVelocityVertical);
+        EventManager.Instance.OnJumpOrbActivated.AddListener(Jump);
+        EventManager.Instance.OnMenuPaused.AddListener(DisableMovement);
+        EventManager.Instance.OnMenuUnpaused.AddListener(EnableMovement);
     }
 
     private void OnDisable()
     {
-        lfs.OnLevelFinish -= DisableMovement;
-        prm.OnPlayerReset -= ResetVelocityVertical;
-        ojs.OnJumpOrbActivated -= Jump;
-        pms.OnMenuPaused -= DisableMovement;
-        pms.OnMenuUnpaused -= EnableMovement;
+        EventManager.Instance.OnLevelFinish.RemoveListener(DisableMovement);
+        EventManager.Instance.OnPlayerReset.RemoveListener(ResetVelocityVertical);
+        EventManager.Instance.OnJumpOrbActivated.RemoveListener(Jump);
+        EventManager.Instance.OnMenuPaused.RemoveListener(DisableMovement);
+        EventManager.Instance.OnMenuUnpaused.RemoveListener(EnableMovement);
     }
     void FixedUpdate()
     {

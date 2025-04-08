@@ -37,16 +37,16 @@ public class TimerManager : MonoBehaviour, IDataPersistence
 
     private void OnEnable()
     {
-        lfs.OnLevelFinish += PauseTimer;
-        prm.OnPlayerHardReset += ResetTimerValue;
+        EventManager.Instance.OnLevelFinish.AddListener(PauseTimer);
+        EventManager.Instance.OnPlayerHardReset.AddListener(ResetTimerValue);
         SceneManager.sceneLoaded += SetTimerText;
         SceneManager.sceneLoaded += SetLevelIndex;
     }
 
     private void OnDisable()
     {
-        lfs.OnLevelFinish -= PauseTimer;
-        prm.OnPlayerHardReset -= ResetTimerValue;
+        EventManager.Instance.OnLevelFinish.RemoveListener(PauseTimer);
+        EventManager.Instance.OnPlayerHardReset.RemoveListener(ResetTimerValue);
         SceneManager.sceneLoaded -= SetTimerText;
         SceneManager.sceneLoaded -= SetLevelIndex;
     }

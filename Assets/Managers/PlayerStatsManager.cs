@@ -35,12 +35,12 @@ public class PlayerStatsManager : MonoBehaviour, IDataPersistence
 
     private void OnEnable()
     {
-        lfs.OnLevelFinish += GoToMainMenu;
+        EventManager.Instance.OnLevelFinish.AddListener(GoToMainMenu);
         SceneManager.sceneUnloaded += SetNewRecentLevel;
     }
     private void OnDisable()
     {
-        lfs.OnLevelFinish -= GoToMainMenu;
+        EventManager.Instance.OnLevelFinish.RemoveListener(GoToMainMenu);
         SceneManager.sceneUnloaded -= SetNewRecentLevel;
     }
     private void KillPlayer()

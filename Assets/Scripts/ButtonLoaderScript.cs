@@ -162,6 +162,7 @@ public class ButtonLoaderScript : MonoBehaviour
     public void OnPlayButtonClicked()
     {
         Debug.Log("Man, that play button be getting pressed bruh");
+        MouseScript.UnlockCursor();
         SceneManager.LoadScene(psm.Instance.GetRecentLevelIndex());
     }
     private void ChangePlayText(Scene scene, LoadSceneMode mode)
@@ -247,6 +248,7 @@ public class ButtonLoaderScript : MonoBehaviour
 
         ClampValues(ref value, menuSpeedSlider.minValue, menuSpeedSlider.maxValue);
         psm.Instance.SetMenuTransitionDuration(value);
+        menuTransitionDuration = value;
 
         menuSpeedSlider.value = value;
         menuSpeedText.text = value.ToString("F2");

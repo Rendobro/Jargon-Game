@@ -13,8 +13,6 @@ public class CheckpointManager : MonoBehaviour, IDataPersistence
 {
     public static CheckpointManager Instance { get; private set; }
 
-    public static event Action OnCheckpointsInitialized;
-
     // Each value in the array stores the stored checkpoint number of the player in a certain buildIndex - 1.
     // e.g. if checkpointNums[4] == 3 then the player is on checkpoint 3 for level 5;
     // p.s. checkpointNum of 0 means initialCheckpoint
@@ -42,19 +40,19 @@ public class CheckpointManager : MonoBehaviour, IDataPersistence
 
     private void OnEnable()
     {
-        lfs.OnLevelFinish += ResetCheckpoint;
-        cb.OnCheckpointHit += HandleCheckpointHit;
-        vs.OnPlayerHitVoid += ResetPlayer;
-        prm.OnPlayerHardReset += ResetCheckpoint;
+        EventManager.Instance.OnLevelFinish.AddListener(ResetCheckpoint);
+        EventManager.Instance.OnCheckpointHit.AddListener(HandleCheckpointHit);
+        EventManager.Instance.OnPlayerHitVoid.AddListener(ResetPlayer);
+        EventManager.Instance.OnPlayerHardReset.AddListener(ResetCheckpoint);
         SceneManager.sceneLoaded += InitializeCheckpoints;
     }
 
     private void OnDisable()
     {
-        lfs.OnLevelFinish -= ResetCheckpoint;
-        cb.OnCheckpointHit -= HandleCheckpointHit;
-        vs.OnPlayerHitVoid -= ResetPlayer;
-        prm.OnPlayerHardReset -= ResetCheckpoint;
+        EventManager.Instance.OnLevelFinish.RemoveListener(ResetCheckpoint);
+        EventManager.Instance.OnCheckpointHit.RemoveListener(HandleCheckpointHit);
+        EventManager.Instance.OnPlayerHitVoid.RemoveListener(ResetPlayer);
+        EventManager.Instance.OnPlayerHardReset.RemoveListener(ResetCheckpoint);
         SceneManager.sceneLoaded -= InitializeCheckpoints;
     }
 
@@ -119,7 +117,7 @@ public class CheckpointManager : MonoBehaviour, IDataPersistence
                 }
                 currentCheckpoints[currentLevelIndex-1] = initialCheckpoint;
             }
-            OnCheckpointsInitialized?.Invoke();
+            EventManager.Instance.OnCheckpointsInitialized?.Invoke();
         }
 
     }

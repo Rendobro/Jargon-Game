@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class OrbJumpScript : MonoBehaviour
 {
-    public static event Action OnJumpOrbActivated;
     [SerializeField] MovementScript msPlayer;
     private bool ableToJump = false;
 
@@ -30,7 +29,7 @@ public class OrbJumpScript : MonoBehaviour
     {
         if (Input.GetKey(KeyCode.E) && Input.GetKey(KeyCode.Y) && Input.GetKey(KeyCode.L) && Input.GetKey(KeyCode.Q))
         {
-            OnJumpOrbActivated?.Invoke();
+            EventManager.Instance.OnJumpOrbActivated?.Invoke();
         }
     }
     private void OnTriggerStay(Collider hit) 
@@ -38,7 +37,7 @@ public class OrbJumpScript : MonoBehaviour
         if (hit.gameObject.layer == 6 && Input.GetButton("Jump") && ableToJump)
         {
             ableToJump = false;
-            OnJumpOrbActivated?.Invoke();
+            EventManager.Instance.OnJumpOrbActivated?.Invoke();
         }
     }
 }

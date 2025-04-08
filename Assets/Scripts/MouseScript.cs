@@ -20,8 +20,8 @@ public class MouseScript : MonoBehaviour
     void Update()
     {
         StartCoroutine(WaitForInitialization());
-        Debug.Log("sens of script prior:" + sensitivity);
-        Debug.Log($"sens in psm prior: {psm.Instance.GetSensitivity()}");
+        // Debug.Log("sens of script prior:" + sensitivity);
+        // Debug.Log($"sens in psm prior: {psm.Instance.GetSensitivity()}");
         if (isDisabled) return;
         MouseDetector();
     }
@@ -33,28 +33,28 @@ public class MouseScript : MonoBehaviour
             Debug.LogWarning("Waiting for PlayerStatsManager.Instance to initialize...");
             yield return null; // Wait for the next frame
         }
-        Debug.Log("sens of script after:" + sensitivity);
-        Debug.Log($"sens in psm after: {psm.Instance.GetSensitivity()}");
+        // Debug.Log("sens of script after:" + sensitivity);
+        // Debug.Log($"sens in psm after: {psm.Instance.GetSensitivity()}");
     }
 
     private void OnEnable()
     {
         sensitivity = psm.Instance.GetSensitivity();
-        lfs.OnLevelFinish += UnlockCursor;
-        pms.OnMenuPaused += DisableRotation;
-        pms.OnMenuPaused += UnlockCursor;
-        pms.OnMenuUnpaused += EnableRotation;
-        pms.OnMenuUnpaused += LockCursor;
+        EventManager.Instance.OnLevelFinish.AddListener(UnlockCursor);
+        EventManager.Instance.OnMenuPaused.AddListener(DisableRotation);
+        EventManager.Instance.OnMenuPaused.AddListener(UnlockCursor);
+        EventManager.Instance.OnMenuUnpaused.AddListener(EnableRotation);
+        EventManager.Instance.OnMenuUnpaused.AddListener(LockCursor);
         SceneManager.sceneLoaded += UnlockCursor;
     }
 
     private void OnDisable()
     {
-        lfs.OnLevelFinish -= UnlockCursor;
-        pms.OnMenuPaused -= DisableRotation;
-        pms.OnMenuPaused -= UnlockCursor;
-        pms.OnMenuUnpaused -= EnableRotation;
-        pms.OnMenuUnpaused -= LockCursor;
+        EventManager.Instance.OnLevelFinish.RemoveListener(UnlockCursor);
+        EventManager.Instance.OnMenuPaused.RemoveListener(DisableRotation);
+        EventManager.Instance.OnMenuPaused.RemoveListener(UnlockCursor);
+        EventManager.Instance.OnMenuUnpaused.RemoveListener(EnableRotation);
+        EventManager.Instance.OnMenuUnpaused.RemoveListener(LockCursor);
         SceneManager.sceneLoaded -= UnlockCursor;
     }
 

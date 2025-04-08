@@ -11,10 +11,8 @@ using UnityEngine.SceneManagement;
 public class PlayerResetManager : MonoBehaviour
 {
     public static PlayerResetManager Instance {get; private set;}
-    public static event Action OnPlayerReset;
-    public static event Action<int> OnPlayerHardReset;
     [Header("Player Instance Data")]
-    private GameObject newPlayer;
+    private GameObject currPlayer;
     private CharacterController ctrl;
     private Camera cam;
     private Transform worldSpawn;
@@ -37,26 +35,26 @@ public class PlayerResetManager : MonoBehaviour
 
     private void OnEnable()
     {
-        cm.OnCheckpointsInitialized += SetCurrentWorldSpawn;
+        EventManager.Instance.OnCheckpointsInitialized.AddListener(SetCurrentWorldSpawn);
         SceneManager.sceneLoaded += InstantiatePlayer;
-        SceneManager.sceneUnloaded += DestroyPlayer;
+        //SceneManager.sceneUnloaded += DestroyPlayer;
     }
 
     private void OnDisable()
     {
-        cm.OnCheckpointsInitialized -= SetCurrentWorldSpawn;
+        EventManager.Instance.OnCheckpointsInitialized.RemoveListener(SetCurrentWorldSpawn);
         SceneManager.sceneLoaded -= InstantiatePlayer;
-        SceneManager.sceneUnloaded -= DestroyPlayer;
+        //SceneManager.sceneUnloaded -= DestroyPlayer;
     }
 
     private void Update() => ResetChecks();
 
     public void ResetChar()
     {
-        OnPlayerReset?.Invoke();
+        EventManager.Instance.OnPlayerReset?.Invoke();
 
         ctrl.enabled = false;
-        transform.SetPositionAndRotation(cm.Instance.GetCurrentCheckpointTransform().position, Quaternion.identity);
+        currPlayer.transform.SetPositionAndRotation(cm.Instance.GetCurrentCheckpointTransform().position, Quaternion.identity);
         ctrl.enabled = true;
 
         cam.transform.rotation = Quaternion.identity;
@@ -64,21 +62,21 @@ public class PlayerResetManager : MonoBehaviour
     public void ResetChar(Transform spawnPoint)
     {
         Debug.Log("cam is null: " + (cam  == null));
-        OnPlayerReset?.Invoke();
+        EventManager.Instance.OnPlayerReset?.Invoke();
         
         ctrl.enabled = false;
-        transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
+        currPlayer.transform.SetPositionAndRotation(spawnPoint.position, spawnPoint.rotation);
         ctrl.enabled = true;
 
         cam.transform.rotation = spawnPoint.rotation;
     }
     public void ResetChar(Vector3 spawnPointPos)
     {
-        OnPlayerReset?.Invoke();
+        EventManager.Instance.OnPlayerReset?.Invoke();
 
         ctrl.enabled = false;
-        transform.position = spawnPointPos;
-        transform.localRotation = Quaternion.identity;
+        currPlayer.transform.position = spawnPointPos;
+        currPlayer.transform.localRotation = Quaternion.identity;
         ctrl.enabled = true;
 
         cam.transform.localRotation = Quaternion.identity;
@@ -86,11 +84,11 @@ public class PlayerResetManager : MonoBehaviour
 
     public void HardResetChar()
     {
-        Debug.Log("hrc worldSpawn is null" + (worldSpawn == null));
-        OnPlayerHardReset?.Invoke(SceneManager.GetActiveScene().buildIndex);
+        Debug.Log("worldSpawn when hard resetting" + worldSpawn.position);
+        EventManager.Instance.OnPlayerHardReset?.Invoke(SceneManager.GetActiveScene().buildIndex);
 
         ctrl.enabled = false;
-        transform.SetPositionAndRotation(worldSpawn.position, worldSpawn.rotation);
+        currPlayer.transform.SetPositionAndRotation(worldSpawn.position, worldSpawn.rotation);
         ctrl.enabled = true;
 
         cam.transform.rotation = worldSpawn.rotation;
@@ -99,7 +97,8 @@ public class PlayerResetManager : MonoBehaviour
 
     private void ResetChecks()
     {
-        if (Input.GetButtonDown("Reset")) ResetChar(transform);
+        Debug.Log("Current checkpoint transform" + cm.Instance.GetCurrentCheckpointTransform().position);
+        if (Input.GetButtonDown("Reset")) ResetChar(cm.Instance.GetCurrentCheckpointTransform());
         if (Input.GetButtonDown("HardReset")) HardResetChar();
     }
 
@@ -107,8 +106,9 @@ public class PlayerResetManager : MonoBehaviour
     {
         if (SceneManager.GetActiveScene().buildIndex != psm.mainMenuIndex)
         {
-            worldSpawn = cm.Instance.GetInitialCheckpointTransform(SceneManager.GetActiveScene().buildIndex);
-            Debug.Log("worldSpawn after initialization: " + (worldSpawn.position));
+            Transform initialCheckpoint = cm.Instance.GetInitialCheckpointTransform(SceneManager.GetActiveScene().buildIndex);
+            worldSpawn.SetPositionAndRotation(initialCheckpoint.position, initialCheckpoint.rotation);
+            Debug.Log("worldSpawn after initialization: " + worldSpawn.position);
         }
     }
 
@@ -116,11 +116,17 @@ public class PlayerResetManager : MonoBehaviour
     {
         if (scene.buildIndex != psm.mainMenuIndex)
         {
-            Debug.Log($"GameObjectWithTagPlayer {GameObject.FindWithTag("Player")}");
-            if (GameObject.FindWithTag("Player") == null)
+            Debug.Log($"GameObjectWithTagPlayer {GameObject.FindWithTag("Player").transform.position}");
+            currPlayer = GameObject.FindWithTag("Player");
+            if (currPlayer == null)
             {
-                Debug.Log($"post: GameObjectWithTagPlayer {GameObject.FindWithTag("Player")}");
-                GameObject newPlayer = Instantiate(playerPrefab, cm.Instance.GetCurrentCheckpointTransform().position, Quaternion.identity);
+                currPlayer = Instantiate(playerPrefab, cm.Instance.GetCurrentCheckpointTransform().position, Quaternion.identity);
+                ctrl = currPlayer.GetComponent<CharacterController>();
+                cam = currPlayer.GetComponentInChildren<Camera>();
+            }
+            else
+            {
+                GameObject newPlayer = currPlayer;
                 ctrl = newPlayer.GetComponent<CharacterController>();
                 cam = newPlayer.GetComponentInChildren<Camera>();
             }
@@ -129,6 +135,6 @@ public class PlayerResetManager : MonoBehaviour
 
     private void DestroyPlayer(Scene _)
     {
-        Destroy(newPlayer);
+        Destroy(currPlayer);
     }
 }

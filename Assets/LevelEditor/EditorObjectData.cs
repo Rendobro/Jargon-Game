@@ -7,9 +7,16 @@ public class ObjectData : MonoBehaviour
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
-    
-    private void Start()
+}
+
+[System.Serializable]
+public class ObjectData_JB : ObjectData
+{
+    public enum JargonType 
     {
-        ObjectData[] objects = FindObjectsByType<ObjectData>(FindObjectsSortMode.None);
+        Respawn = 1 << 0,
+        MovingPlatform = 1 << 1,
+        Timer = 1 << 2,
+
     }
 }

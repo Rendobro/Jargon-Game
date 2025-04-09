@@ -1,9 +1,6 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using lfs = LevelFinishScript;
-using pms = PauseMenuScript;
 using psm = PlayerStatsManager;
 public class MouseScript : MonoBehaviour
 {

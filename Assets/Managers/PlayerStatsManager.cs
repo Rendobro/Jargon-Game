@@ -17,6 +17,7 @@ public class PlayerStatsManager : MonoBehaviour, IDataPersistence
     private readonly float[] playerHighscores = new float[bls.numLevels];
     private float gravity;
     private float sensitivity;
+    private float editorSensitivity;
     private float menuTransitionDuration;
     private int recentLevelIndex;
     private int lastLevelUnlocked;

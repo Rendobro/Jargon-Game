@@ -16,3 +16,15 @@ public class ObjectInfo
     public Quaternion rotation;
     public Vector3 scale;
 }
+
+[System.Serializable]
+public class ObjectInfo_JB : ObjectInfo
+{
+    public enum JargonType 
+    {
+        Respawn = 1 << 0,
+        MovingPlatform = 1 << 1,
+        Timer = 1 << 2,
+
+    }
+}

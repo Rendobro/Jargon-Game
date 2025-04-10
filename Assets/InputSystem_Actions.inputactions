@@ -536,15 +536,6 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "MouseDrag",
-                    "type": "PassThrough",
-                    "id": "44b200b1-1557-4083-816c-b22cbdf77ddf",
-                    "expectedControlType": "Button",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
-                {
                     "name": "MiddleClick",
                     "type": "PassThrough",
                     "id": "dad70c86-b58c-4b17-88ad-f5e53adf419e",
@@ -581,13 +572,13 @@
                     "initialStateCheck": false
                 },
                 {
-                    "name": "MouseDelta",
-                    "type": "Value",
-                    "id": "6bc26b83-39dd-441b-af16-3154f733e969",
-                    "expectedControlType": "Vector2",
+                    "name": "RightClick",
+                    "type": "PassThrough",
+                    "id": "37f291b4-819a-468c-b6e3-7e79ab91c538",
+                    "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
-                    "initialStateCheck": true
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -967,17 +958,6 @@
                 },
                 {
                     "name": "",
-                    "id": "4c191405-5738-4d4b-a523-c6a301dbf754",
-                    "path": "<Mouse>/rightButton",
-                    "interactions": "Hold",
-                    "processors": "",
-                    "groups": "Keyboard&Mouse",
-                    "action": "MouseDrag",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
                     "id": "24066f69-da47-44f3-a07e-0015fb02eb2e",
                     "path": "<Mouse>/middleButton",
                     "interactions": "",
@@ -1011,7 +991,44 @@
                 },
                 {
                     "name": "",
-                    "id": "e772cb4a-5e4a-4ae2-ad74-e7d5eb64a197",
+                    "id": "e27b5ec3-cff3-4113-836a-bac8763572d9",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RightClick",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        },
+        {
+            "name": "Editor",
+            "id": "d1e378e1-c20c-4a5e-94fc-96af339b3065",
+            "actions": [
+                {
+                    "name": "MouseDelta",
+                    "type": "Value",
+                    "id": "5e965c73-207d-4d28-b40f-65b3a5407376",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "MouseDrag",
+                    "type": "PassThrough",
+                    "id": "394aa8d9-324a-434d-b32e-70a221c39047",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "d78cb64f-d89a-4b06-b4e3-951e848aab4a",
                     "path": "<Gamepad>/rightStick",
                     "interactions": "",
                     "processors": "",
@@ -1022,7 +1039,7 @@
                 },
                 {
                     "name": "",
-                    "id": "2420dd4a-2ecc-4c66-a0a3-484178507535",
+                    "id": "2b08c4af-8026-4745-999f-5a584a6ca908",
                     "path": "<Joystick>/{Hatswitch}",
                     "interactions": "",
                     "processors": "",
@@ -1033,12 +1050,23 @@
                 },
                 {
                     "name": "",
-                    "id": "022989db-77bf-47b1-a119-2652406c4687",
+                    "id": "caca616e-08ca-4cbb-911c-2a8af7b93922",
                     "path": "<Pointer>/delta",
                     "interactions": "",
                     "processors": "",
                     "groups": ";Keyboard&Mouse;Touch",
                     "action": "MouseDelta",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "73b90bf4-2a08-495b-9edd-ddb8f7a69690",
+                    "path": "<Mouse>/rightButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "MouseDrag",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

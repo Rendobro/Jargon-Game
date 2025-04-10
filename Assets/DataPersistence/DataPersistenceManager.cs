@@ -71,7 +71,7 @@ public class DataPersistenceManager : MonoBehaviour
 
         foreach (IDataPersistence dpo in dataPersistenceObjects)
         {
-            Debug.Log($"Loaded Script: {dpo.GetType().Name} recentLevelIndex: {gameData.recentLevelIndex}");
+            Debug.Log($"Loaded Script: {dpo.GetType().Name} editorSensitivity: {gameData.editorSensitivity}");
             dpo.LoadData(gameData);
 
         }
@@ -83,7 +83,7 @@ public class DataPersistenceManager : MonoBehaviour
     {
         foreach (IDataPersistence dpo in dataPersistenceObjects)
         {
-            Debug.Log($"Saved Script: {dpo.GetType().Name} recentLevelIndex: {gameData.recentLevelIndex}");
+            Debug.Log($"Saved Script: {dpo.GetType().Name} editorSensitivity: {gameData.editorSensitivity}");
             dpo.SaveData(ref gameData);
         }
 

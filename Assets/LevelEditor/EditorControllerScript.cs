@@ -12,26 +12,26 @@ public class EditorControllerScript : MonoBehaviour, IDataPersistence, InputSyst
     private bool isRightClickHeld = false;
     private InputSystem_Actions inputActions;
 
-    private void Start()
-    {
-        inputActions = new InputSystem_Actions();
-    }
+    // private void Awake()
+    // {
+    //     inputActions = new InputSystem_Actions();
+    // }
 
-    private void OnEnable()
-    {
-        inputActions.Editor.SetCallbacks(this);
-        inputActions.Enable();
-    }
+    // private void OnEnable()
+    // {
+    //     inputActions.Editor.SetCallbacks(this);
+    //     inputActions.Enable();
+    // }
 
-    private void OnDisable()
-    {
-        inputActions.Disable();
-    }
+    // private void OnDisable()
+    // {
+    //     inputActions.Disable();
+    // }
 
-    private void OnDestroy()
-    {
-        inputActions.Dispose();
-    }
+    // private void OnDestroy()
+    // {
+    //     inputActions.Dispose();
+    // }
 
     private void Update()
     {

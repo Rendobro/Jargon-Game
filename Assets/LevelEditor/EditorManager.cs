@@ -5,6 +5,8 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 {
     public static EditorManager Instance { get; private set; }
 
+    [SerializeField] private int levelNum = 0;
+
     [SerializeField] private List<ObjectData> editorPrefabs = new();
 
     [SerializeField] private List<LevelData> playerLevels = new();
@@ -15,7 +17,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
     {
         if (Instance != null)
         {
-        Debug.LogError("Already an EditorManager Instance in this scene.\nDestroying current instance.");
+            Debug.LogError("Already an EditorManager Instance in this scene.\nDestroying current instance.");
             Destroy(this);
             return;
         }
@@ -24,12 +26,14 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
     private void OnEnable()
     {
-        EventManager.Instance.OnCreateNewLevel.AddListener(CreateNewLevel);
+        if (EventManager.Instance != null)
+            EventManager.Instance.OnCreateNewLevel.AddListener(CreateNewLevel);
     }
 
     private void OnDisable()
     {
-        EventManager.Instance.OnCreateNewLevel.RemoveListener(CreateNewLevel);
+        if (EventManager.Instance != null)
+            EventManager.Instance.OnCreateNewLevel.RemoveListener(CreateNewLevel);
     }
 
     private void Start()
@@ -38,7 +42,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
     }
 
     [ContextMenu("Create New Level")]
-    private void CreateNewLevel()
+    public void CreateNewLevel()
     {
         LevelData level = new() { levelID = playerLevels.Count };
 
@@ -52,7 +56,6 @@ public class EditorManager : MonoBehaviour, IDataPersistence
                 scale = allCurrentSceneObjects[i].transform.localScale
             };
             level.objectInfos.Add(info);
-            Debug.Log($"level {level.levelID} object info {i}: {level.objectInfos[i].objID}");
         }
 
         playerLevels.Add(level);
@@ -71,9 +74,53 @@ public class EditorManager : MonoBehaviour, IDataPersistence
                 {
                     obj.objID = index;
                     editorPrefabs.Add(obj);
-                    Debug.Log($"editor object {index}: {editorPrefabs[index].objID}");
                 }
                 index++;
+            }
+        }
+    }
+
+    [ContextMenu("Load Level")]
+    public void LoadLevel()
+    {
+        LoadLevel(levelNum);
+    }
+
+    public void LoadLevel(int levelID)
+    {
+        if (levelID < 0 || levelID >= playerLevels.Count)
+        {
+            Debug.LogError("levelID out of range");
+            return;
+        }
+
+        foreach (ObjectData obj in FindObjectsByType<ObjectData>(FindObjectsSortMode.None))
+        {
+            obj.gameObject.SetActive(false);
+            Destroy(obj.gameObject);
+        }
+
+        foreach (ObjectInfo oi in playerLevels[levelID].objectInfos)
+        {
+            ObjectData newObj = Instantiate(editorPrefabs[oi.objID], oi.position, oi.rotation);
+            newObj.transform.localScale = oi.scale;
+            newObj.gameObject.SetActive(true);
+
+            // Activate all components
+            foreach (var component in newObj.GetComponents<MonoBehaviour>())
+            {
+                component.enabled = true; // Enable all MonoBehaviour components
+            }
+
+            // Optionally enable other components like Colliders or Renderers
+            foreach (var collider in newObj.GetComponents<Collider>())
+            {
+                collider.enabled = true;
+            }
+
+            foreach (var renderer in newObj.GetComponents<Renderer>())
+            {
+                renderer.enabled = true;
             }
         }
     }

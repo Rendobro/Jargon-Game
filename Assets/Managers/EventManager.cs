@@ -16,13 +16,14 @@ public class EventManager : MonoBehaviour
     public UnityEvent OnMenuUnpaused;
     public UnityEvent<Transform> OnPlayerHitVoid;
     public UnityEvent OnCreateNewLevel;
+    public UnityEvent<ObjectData> OnObjectSelected;
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
             Debug.LogError("Already an EventManager Instance in this scene.\nDestroying current instance.");
-            Destroy(this);
+            Destroy(gameObject);
             return;
         }
         Instance = this;

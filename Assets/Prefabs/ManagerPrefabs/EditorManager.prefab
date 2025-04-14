@@ -1,0 +1,88 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &5662556191224477576
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7816716727198377750}
+  - component: {fileID: 4608817654458813629}
+  m_Layer: 0
+  m_Name: EditorManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7816716727198377750
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5662556191224477576}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 3.3286147, y: 0.28291142, z: 7.6789474}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4608817654458813629
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5662556191224477576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6a4e897f463443bfa161f957599bcbe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  levelNum: 0
+  editorPrefabs:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  playerLevels:
+  - levelID: 0
+    objectInfos:
+    - objID: 1
+      position: {x: -1.8239043, y: 0.28291154, z: 10.203941}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - objID: 0
+      position: {x: -0.59390426, y: 0.8429115, z: 7.128941}
+      rotation: {x: -0, y: -0, z: -0.19671264, w: 0.9804612}
+      scale: {x: 1, y: 1.5455, z: 1.0089235}
+    - objID: 2
+      position: {x: 1.5860958, y: 0.28291154, z: 11.053941}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1.7601, y: 1.7601, z: 1.7601}
+    - objID: 2
+      position: {x: 6.9560957, y: 0.28291154, z: 7.843941}
+      rotation: {x: 0.6413359, y: -0.25946838, z: 0.0012790661, w: 0.7220547}
+      scale: {x: 1, y: 1, z: 1}
+  - levelID: 1
+    objectInfos:
+    - objID: 1
+      position: {x: 4.6960955, y: 0.28291154, z: 4.863941}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - objID: 0
+      position: {x: 6.6560955, y: 0.8429115, z: 14.383941}
+      rotation: {x: -0, y: -0, z: -0.19671264, w: 0.9804612}
+      scale: {x: 1, y: 1.5455, z: 1.0089235}
+    - objID: 2
+      position: {x: 1.5860958, y: 0.28291154, z: 11.053941}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1.7601, y: 1.7601, z: 1.7601}
+    - objID: 2
+      position: {x: -2.3739042, y: 0.28291154, z: 7.743941}
+      rotation: {x: 0.6413359, y: -0.25946838, z: 0.0012790661, w: 0.7220547}
+      scale: {x: 1, y: 1, z: 1}

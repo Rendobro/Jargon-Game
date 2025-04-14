@@ -15,7 +15,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
     private void Awake()
     {
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Debug.LogError("Already an EditorManager Instance in this scene.\nDestroying current instance.");
             Destroy(this);
@@ -26,13 +26,11 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
     private void OnEnable()
     {
-        if (EventManager.Instance != null)
             EventManager.Instance.OnCreateNewLevel.AddListener(CreateNewLevel);
     }
 
     private void OnDisable()
     {
-        if (EventManager.Instance != null)
             EventManager.Instance.OnCreateNewLevel.RemoveListener(CreateNewLevel);
     }
 
@@ -73,7 +71,9 @@ public class EditorManager : MonoBehaviour, IDataPersistence
                 if (!editorPrefabs.Exists(thing => thing.objID == obj.objID))
                 {
                     obj.objID = index;
-                    editorPrefabs.Add(obj);
+                    ObjectData newObjData = new GameObject(obj.name).AddComponent<ObjectData>();
+                    newObjData = new ObjectData(newObjData);
+                    editorPrefabs.Add(newObjData);
                 }
                 index++;
             }
@@ -102,7 +102,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
         foreach (ObjectInfo oi in playerLevels[levelID].objectInfos)
         {
-            ObjectData newObj = Instantiate(editorPrefabs[oi.objID], oi.position, oi.rotation);
+            ObjectData newObj = Instantiate(editorPrefabs[oi.objID], oi.position, oi.rotation, GameObject.FindGameObjectWithTag("ObjectContainer").transform);
             newObj.transform.localScale = oi.scale;
             newObj.gameObject.SetActive(true);
 
@@ -113,14 +113,20 @@ public class EditorManager : MonoBehaviour, IDataPersistence
             }
 
             // Optionally enable other components like Colliders or Renderers
-            foreach (var collider in newObj.GetComponents<Collider>())
+            foreach (Collider collider in newObj.GetComponents<Collider>())
             {
                 collider.enabled = true;
             }
 
-            foreach (var renderer in newObj.GetComponents<Renderer>())
+            foreach (Renderer renderer in newObj.GetComponents<Renderer>())
             {
                 renderer.enabled = true;
+            }
+
+            foreach (Outline outline in newObj.GetComponents<Outline>())
+            {
+                outline.OutlineColor = SelectionScript.GetHoverColor();
+                outline.OutlineMode = Outline.Mode.OutlineHidden;
             }
         }
     }

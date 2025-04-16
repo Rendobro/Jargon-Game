@@ -24,16 +24,6 @@ public class ObjectData : MonoBehaviour
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
-
-    public ObjectData(ObjectData obj)
-    {
-        this.position = obj.position;
-        this.scale = obj.scale;
-        this.isSelected = obj.isSelected;
-        this.rotation = obj.rotation;
-        this.objID = obj.objID;
-        this.IsSelected = obj.IsSelected;
-    }
 }
 
 [System.Serializable]
@@ -44,13 +34,7 @@ public class ObjectData_JB : ObjectData
         Respawn = 1 << 0,
         MovingPlatform = 1 << 1,
         Timer = 1 << 2,
-
     }
 
     public JargonType jargonType;
-
-    public ObjectData_JB(ObjectData_JB obj) : base(obj)
-    {
-        this.jargonType = obj.jargonType;
-    }
 }

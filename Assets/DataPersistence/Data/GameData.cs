@@ -17,6 +17,7 @@ public class GameData
 
     [Header("Editor Data")]
     public List<LevelData> playerLevels;
+    public List<ObjectData> editorPrefabs;
     public float editorSensitivity;
 
     [Header("Speedrun Stats")]
@@ -40,6 +41,7 @@ public class GameData
         highscores = new float[bls.numLevels];
         ongoingLevelTimers = new float[bls.numLevels];
         playerLevels = new();
+        editorPrefabs = new();
     }
 
     public override string ToString()
@@ -55,6 +57,7 @@ public class GameData
         $"\nhighscores: {ArrayToString(highscores)}" +
         $"\nongoingLevelTimers: {ArrayToString(ongoingLevelTimers)}" +
         $"\nplayerLevels: {playerLevels.ToLineSeparatedString()}" +
+        $"\neditorPrefabs: {editorPrefabs.ToLineSeparatedString()}" +
         $"\neditorSensitivity: {editorSensitivity}";
     }
     private string ArrayToString<T>(T[] array)

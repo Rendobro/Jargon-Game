@@ -17,19 +17,19 @@ public class SelectionScript : MonoBehaviour
         selectedColor = Color.green;
         hoverColor = Color.cyan;
         float mixAmount = 0.35f;
-        Vector3 colorCoords = Vector3.Lerp(new Vector3(hoverColor.r,hoverColor.g,hoverColor.b),new Vector3(selectedColor.r,selectedColor.g,selectedColor.b), mixAmount);
-        mixedColor = new Color(colorCoords.x,colorCoords.y,colorCoords.z);
+        Vector3 colorCoords = Vector3.Lerp(new Vector3(hoverColor.r, hoverColor.g, hoverColor.b), new Vector3(selectedColor.r, selectedColor.g, selectedColor.b), mixAmount);
+        mixedColor = new Color(colorCoords.x, colorCoords.y, colorCoords.z);
     }
 
     private void OnEnable()
     {
         Debug.Log($"Event Manager is null? {EventManager.Instance == null}");
-        EventManager.Instance.OnObjectSelected.AddListener(PrintSelected);
+        EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmo);
     }
 
     private void OnDisable()
     {
-        EventManager.Instance.OnObjectSelected.RemoveListener(PrintSelected);
+        EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmo);
     }
 
     void Update()
@@ -38,8 +38,9 @@ public class SelectionScript : MonoBehaviour
         HandleSelecting();
     }
 
-    private void PrintSelected(ObjectData obj)
+    private void SetTransformGizmo(ObjectData obj)
     {
+        Gizmos s = new Gizmos();
         Debug.Log(obj.name + " has been selected!");
     }
 
@@ -106,11 +107,14 @@ public class SelectionScript : MonoBehaviour
     private void DehoverObject(ObjectData obj) => obj.transform.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineHidden;
     private void DeselectObject(ObjectData obj)
     {
-        Outline objOutline = obj.transform.GetComponent<Outline>();
-        selectedObjects.Remove(obj);
-        obj.IsSelected = false;
-        objOutline.OutlineColor = hoverColor;
-        objOutline.OutlineMode = Outline.Mode.OutlineHidden;
+        if (obj != null && !obj.Equals(null))
+        {
+            Outline objOutline = obj.transform.GetComponent<Outline>();
+            selectedObjects.Remove(obj);
+            obj.IsSelected = false;
+            objOutline.OutlineColor = hoverColor;
+            objOutline.OutlineMode = Outline.Mode.OutlineHidden;
+        }
     }
 
     public static Color GetHoverColor()

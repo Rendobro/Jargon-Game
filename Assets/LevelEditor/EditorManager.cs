@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 
 public class EditorManager : MonoBehaviour, IDataPersistence
 {
@@ -7,7 +8,8 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
     [SerializeField] private int levelNum = 0;
 
-    [SerializeField] private List<ObjectData> editorPrefabs = new();
+    [SerializeField] private EditorPrefabsContainer editorPrefabsContainer;
+    private List<ObjectData> editorPrefabs;
 
     [SerializeField] private List<LevelData> playerLevels = new();
 
@@ -26,17 +28,17 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
     private void OnEnable()
     {
-            EventManager.Instance.OnCreateNewLevel.AddListener(CreateNewLevel);
+        EventManager.Instance.OnCreateNewLevel.AddListener(CreateNewLevel);
     }
 
     private void OnDisable()
     {
-            EventManager.Instance.OnCreateNewLevel.RemoveListener(CreateNewLevel);
+        EventManager.Instance.OnCreateNewLevel.RemoveListener(CreateNewLevel);
     }
 
     private void Start()
     {
-        InitializePrefabList();
+        InitializeLists();
     }
 
     [ContextMenu("Create New Level")]
@@ -58,26 +60,11 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
         playerLevels.Add(level);
     }
-
-    [ContextMenu("Initialize Prefab List")]
-    private void InitializePrefabList()
+    private void InitializeLists()
     {
+        editorPrefabs = editorPrefabsContainer.editorPrefabs;
+        Debug.Log("Editor Prefabs: \n"+editorPrefabs.ToLineSeparatedString());
         allCurrentSceneObjects = FindObjectsByType<ObjectData>(FindObjectsSortMode.None);
-        if (editorPrefabs.Count < allCurrentSceneObjects.Length)
-        {
-            int index = 0;
-            foreach (ObjectData obj in allCurrentSceneObjects)
-            {
-                if (!editorPrefabs.Exists(thing => thing.objID == obj.objID))
-                {
-                    obj.objID = index;
-                    ObjectData newObjData = new GameObject(obj.name).AddComponent<ObjectData>();
-                    newObjData = new ObjectData(newObjData);
-                    editorPrefabs.Add(newObjData);
-                }
-                index++;
-            }
-        }
     }
 
     [ContextMenu("Load Level")]
@@ -106,22 +93,11 @@ public class EditorManager : MonoBehaviour, IDataPersistence
             newObj.transform.localScale = oi.scale;
             newObj.gameObject.SetActive(true);
 
-            // Activate all components
-            foreach (var component in newObj.GetComponents<MonoBehaviour>())
-            {
-                component.enabled = true; // Enable all MonoBehaviour components
-            }
+            foreach (var component in newObj.GetComponents<MonoBehaviour>()) component.enabled = true;
 
-            // Optionally enable other components like Colliders or Renderers
-            foreach (Collider collider in newObj.GetComponents<Collider>())
-            {
-                collider.enabled = true;
-            }
+            foreach (Collider collider in newObj.GetComponents<Collider>()) collider.enabled = true;
 
-            foreach (Renderer renderer in newObj.GetComponents<Renderer>())
-            {
-                renderer.enabled = true;
-            }
+            foreach (Renderer renderer in newObj.GetComponents<Renderer>()) renderer.enabled = true;
 
             foreach (Outline outline in newObj.GetComponents<Outline>())
             {
@@ -131,13 +107,24 @@ public class EditorManager : MonoBehaviour, IDataPersistence
         }
     }
 
-    public void LoadData(GameData data)
+    private void ConstructObjectDataWith(ref ObjectData newObjData, ObjectData oldObjData)
     {
-        playerLevels = new List<LevelData>(data.playerLevels);
+        newObjData.position = oldObjData.position;
+        newObjData.scale = oldObjData.scale;
+        newObjData.rotation = oldObjData.rotation;
+        newObjData.objID = oldObjData.objID;
+        newObjData.IsSelected = oldObjData.IsSelected;
     }
 
     public void SaveData(ref GameData data)
     {
         data.playerLevels = new List<LevelData>(playerLevels);
+        data.editorPrefabs = editorPrefabs;
+    }
+
+    public void LoadData(GameData data)
+    {
+        playerLevels = new List<LevelData>(data.playerLevels);
+        editorPrefabs = data.editorPrefabs;
     }
 }

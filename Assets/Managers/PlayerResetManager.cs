@@ -22,7 +22,7 @@ public class PlayerResetManager : MonoBehaviour
     
     void Awake()
     {
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Debug.LogError("There is already a PlayerResetManager in this script.\n"+
             "Destroying current instance.");
@@ -37,14 +37,14 @@ public class PlayerResetManager : MonoBehaviour
     {
         EventManager.Instance.OnCheckpointsInitialized.AddListener(SetCurrentWorldSpawn);
         SceneManager.sceneLoaded += InstantiatePlayer;
-        //SceneManager.sceneUnloaded += DestroyPlayer;
+        SceneManager.sceneUnloaded += DestroyPlayer;
     }
 
     private void OnDisable()
     {
         EventManager.Instance.OnCheckpointsInitialized.RemoveListener(SetCurrentWorldSpawn);
         SceneManager.sceneLoaded -= InstantiatePlayer;
-        //SceneManager.sceneUnloaded -= DestroyPlayer;
+        SceneManager.sceneUnloaded -= DestroyPlayer;
     }
 
     private void Update() => ResetChecks();
@@ -97,7 +97,7 @@ public class PlayerResetManager : MonoBehaviour
 
     private void ResetChecks()
     {
-        Debug.Log("Current checkpoint transform" + cm.Instance.GetCurrentCheckpointTransform().position);
+        //Debug.Log("Current checkpoint transform" + cm.Instance.GetCurrentCheckpointTransform().position);
         if (Input.GetButtonDown("Reset")) ResetChar(cm.Instance.GetCurrentCheckpointTransform());
         if (Input.GetButtonDown("HardReset")) HardResetChar();
     }

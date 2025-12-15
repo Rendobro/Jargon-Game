@@ -4,12 +4,12 @@ using Unity.VisualScripting;
 public class SelectionScript : MonoBehaviour
 {
     private readonly int editorObjectLayer = 1 << 8;
+    private readonly int editorGizmoLayer = 1 << 9;
     private Transform lastHitTransform = null;
     private static Color selectedColor;
     private static Color hoverColor;
     private static Color mixedColor;
     private bool multiSelectOn = false;
-
     private readonly HashSet<ObjectData> selectedObjects = new();
 
     private void Awake()
@@ -35,16 +35,17 @@ public class SelectionScript : MonoBehaviour
     void Update()
     {
         multiSelectOn = Input.GetButton("MultiSelect");
-        HandleSelecting();
+        HandleObjectSelecting();
+        HandleGizmoSelecting();
     }
 
     private void SetTransformGizmo(ObjectData obj)
     {
-        Gizmos s = new Gizmos();
+        RuntimeTransformGizmo.CreateGizmo(RuntimeTransformGizmo.TransformType.LinearY, obj);
         Debug.Log(obj.name + " has been selected!");
     }
 
-    private void HandleSelecting()
+    private void HandleObjectSelecting()
     {
         bool isObjectHit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hitInfo, 20000f, editorObjectLayer);
         if (isObjectHit)
@@ -78,6 +79,59 @@ public class SelectionScript : MonoBehaviour
         else if (lastHitTransform != null)
             lastHitTransform.GetComponent<Outline>().OutlineColor = selectedColor;
 
+    }
+    private void HandleGizmoSelecting()
+    {
+        bool isGizmoHit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hitInfo, 20000f, editorGizmoLayer);
+        if (isGizmoHit)
+        {
+            Transform currentTransform = hitInfo.transform;
+
+            if (Input.GetButton("Fire1"))
+            {
+                SelectGizmo(currentTransform.GetComponent<RuntimeTransformGizmo>());
+            }
+            else if (!currentTransform.GetComponent<RuntimeTransformGizmo>().IsSelected)
+                HoverGizmo(currentTransform.GetComponent<RuntimeTransformGizmo>());
+            
+            lastHitTransform = hitInfo.transform;
+        }
+        else
+        {
+            DeselectGizmo(lastHitTransform?.GetComponent<RuntimeTransformGizmo>());
+            DehoverGizmo(lastHitTransform?.GetComponent<RuntimeTransformGizmo>());
+            lastHitTransform = null;
+        }
+
+    }
+
+    private void SelectGizmo(RuntimeTransformGizmo gizmo)
+    {
+        gizmo.IsSelected = true;
+
+        // Do visual means of showing it's selected
+    }
+
+    private void DeselectGizmo(RuntimeTransformGizmo gizmo)
+    {
+        if (gizmo != null && !gizmo.Equals(null))
+        {
+            gizmo.IsSelected = false;
+        }
+    }
+
+    private void HoverGizmo(RuntimeTransformGizmo gizmo)
+    {
+        Debug.Log("Hovered gizmo: " + gizmo?.name);
+
+        // Do visual means of showing it's being hovered
+    }
+
+    private void DehoverGizmo(RuntimeTransformGizmo gizmo)
+    {
+        Debug.Log("Dehovered gizmo: " + gizmo?.name);
+
+        // Do visual means of showing it's being dehovered
     }
 
     private void SelectObject(ObjectData obj)

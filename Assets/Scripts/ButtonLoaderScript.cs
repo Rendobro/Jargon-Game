@@ -14,7 +14,7 @@ using dpm = DataPersistenceManager;
 public class ButtonLoaderScript : MonoBehaviour
 {
     [Header("Initialized Values")]
-    public const ushort numLevels = 25;
+public const int numLevels = 25;
     private const float standardGravity = 30f;
     private float menuTransitionDuration;
 

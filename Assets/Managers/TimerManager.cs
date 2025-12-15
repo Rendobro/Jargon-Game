@@ -24,7 +24,7 @@ public class TimerManager : MonoBehaviour, IDataPersistence
     
     void Awake()
     {
-        if (Instance != null)
+        if (Instance != null && Instance != this)
         {
             Debug.LogError("There is already a TimerManager in this script.\n"+
             "Destroying current instance.");
@@ -58,6 +58,7 @@ public class TimerManager : MonoBehaviour, IDataPersistence
     }
     public void ToggleTimerVisibility()
     {
+        if (timerText == null) timerText = GameObject.FindGameObjectWithTag("Timer").GetComponent<TextMeshProUGUI>();
         timerToggledOn = !timerToggledOn;
         RectTransform _tTimer = timerText.rectTransform;
         _tTimer.anchoredPosition = _tTimer.anchoredPosition.Equals(new Vector2(0, 625)) ? new Vector3(0, 625 * (timerToggledOn ? 1 : 2), 0) : new Vector2(0, 625);
@@ -97,7 +98,15 @@ public class TimerManager : MonoBehaviour, IDataPersistence
 
     private void ChangeTimerText()
     {
-        if (timerText != null) timerText.text = FormatTimer(timers[currentLevelIndex-1]);
+        if (timerText != null) 
+        {
+            timerText.text = FormatTimer(timers[currentLevelIndex-1]);
+        }
+        else
+        {
+            timerText = GameObject.FindGameObjectWithTag("Timer").GetComponent<TextMeshProUGUI>();
+            timerText.text = FormatTimer(timers[currentLevelIndex-1]);
+        }
     }
 
     private void SetTimerText(Scene scene, LoadSceneMode mode)

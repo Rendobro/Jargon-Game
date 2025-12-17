@@ -99,6 +99,7 @@ public class CheckpointManager : MonoBehaviour, IDataPersistence
 
     private void InitializeCheckpoints(Scene scene, LoadSceneMode mode)
     {
+        Debug.Log($"Funk {scene.buildIndex} & {psm.mainMenuIndex}");
         if (scene.buildIndex != psm.mainMenuIndex)
         {
             currentLevelIndex = scene.buildIndex;

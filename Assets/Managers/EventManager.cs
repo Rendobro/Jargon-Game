@@ -18,6 +18,8 @@ public class EventManager : MonoBehaviour
     public UnityEvent OnCreateNewLevel;
     public UnityEvent<ObjectData> OnObjectSelected;
     public UnityEvent<RuntimeTransformGizmo> OnGizmoSelected;
+    public UnityEvent<ObjectData> OnObjectDeselected;
+    public UnityEvent<RuntimeTransformGizmo> OnGizmoDeselected;
 
     private void Awake()
     {
@@ -43,5 +45,7 @@ public class EventManager : MonoBehaviour
         OnCreateNewLevel = new UnityEvent();
         OnObjectSelected = new UnityEvent<ObjectData>();
         OnGizmoSelected = new UnityEvent<RuntimeTransformGizmo>();
+        OnObjectDeselected = new UnityEvent<ObjectData>();
+        OnGizmoDeselected = new UnityEvent<RuntimeTransformGizmo>();
     }
 }

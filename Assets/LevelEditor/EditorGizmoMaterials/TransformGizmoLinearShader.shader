@@ -7,6 +7,8 @@ Shader "Unlit/TransformGizmoLinearShader"
     SubShader
     {
         Tags { "RenderType"="Opaque" }
+        ZTest Always
+        ZWrite Off
         LOD 100
 
         Pass

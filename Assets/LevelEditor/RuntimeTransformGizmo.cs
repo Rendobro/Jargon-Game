@@ -1,12 +1,14 @@
 using System;
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class RuntimeTransformGizmo : MonoBehaviour
 {
-    private Color axisColor = new();
+    [HideInInspector] public Color axisColor = new();
     private Material axisMaterial;
-    public ObjectData connectedObj;
+    public TransformType transformType;
+
     private bool isSelected;
     public bool IsSelected
     {
@@ -17,15 +19,20 @@ public class RuntimeTransformGizmo : MonoBehaviour
             if (isSelected != value)
             {
                 isSelected = value;
-                if (EventManager.Instance != null && value == true)
+                if (EventManager.Instance == null) return;
+                if (value == true)
                 {
                     EventManager.Instance.OnGizmoSelected.Invoke(this);
+                }
+                else
+                {
+                    EventManager.Instance.OnGizmoDeselected.Invoke(this);
                 }
             }
         }
     }
-    [SerializeField] private TransformType transformType;
-    [SerializeField] private static EditorGizmoPrefabsContainer gizmoContainer;
+
+    private static readonly HashSet<ObjectData> activeObjects = new();
 
     public enum TransformType
     {
@@ -48,27 +55,27 @@ public class RuntimeTransformGizmo : MonoBehaviour
 
     private void Start()
     {
-        axisMaterial = new Material(gizmoContainer.gizmoBaseMaterial);
-        SetMatColor(axisColor);
+        axisMaterial = new Material(EditorGizmoPrefabsContainer.Instance.gizmoBaseMaterial);
+        SetColor(axisColor);
     }
 
     [ContextMenu("Create Gizmo")]
     public void CreateGizmo()
     {
-        RuntimeTransformGizmo rtgTest = CreateGizmo(TransformType.LinearY,FindAnyObjectByType<ObjectData>());
+        RuntimeTransformGizmo rtgTest = CreateGizmo(TransformType.LinearY, FindAnyObjectByType<ObjectData>());
         Debug.Log("rtg parent's name " + rtgTest.transform.parent.name);
     }
 
-    private void SetMatColor(Color color)
+    public void SetColor(Color color)
     {
         axisColor = color;
-        axisMaterial.SetColor("_AxisColor", color);
+        if (axisMaterial != null) axisMaterial.SetColor("_AxisColor", color);
     }
-
-    // Put this method in another class so RuntimeTransformGizmo can be just for obj instances and not for creation
     public static RuntimeTransformGizmo CreateGizmo(TransformType type, ObjectData connectedObj)
     {
+        if (activeObjects.Contains(connectedObj)) return null;
         Transform connectedTransform = connectedObj.transform;
+        activeObjects.Add(connectedObj);
         TransformType axisDirectionFlags = type & (TransformType.X | TransformType.Y | TransformType.Z);
         TransformType axisTypeFlags = type & (TransformType.Linear | TransformType.Rotation | TransformType.Scale);
 
@@ -98,21 +105,21 @@ public class RuntimeTransformGizmo : MonoBehaviour
                 Vector3 directionLinear = axisDirs;
 
                 //assign this to a prefab instance in the gizmo container
-                gizmo = Instantiate(gizmoContainer.rtgPrefabs[0],connectedTransform);
-                gizmo.transform.rotation = Quaternion.LookRotation(directionLinear,Vector3.up);
+                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[0], connectedTransform);
+                gizmo.transform.rotation = Quaternion.LookRotation(directionLinear, Vector3.up);
                 Debug.Log($"Gizmo instantiated: {gizmo.name} \nGizmo's parent {gizmo.transform.parent.name}");
                 break;
             case TransformType.Rotation:
                 Vector3 circleNormal = axisDirs;
 
                 //assign this to a prefab instance in the gizmo container
-                gizmo = Instantiate(gizmoContainer.rtgPrefabs[1],connectedTransform);
+                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[1], connectedTransform);
                 break;
             case TransformType.Scale:
                 Vector3 directionScale = axisDirs;
 
                 //assign this to a prefab instance in the gizmo container
-                gizmo = Instantiate(gizmoContainer.rtgPrefabs[2],connectedTransform);
+                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[2], connectedTransform);
                 break;
             default:
                 throw new System.ArgumentException("Gizmo with no type detected. Not supposed to happen.");
@@ -120,12 +127,34 @@ public class RuntimeTransformGizmo : MonoBehaviour
 
         gizmo.transform.position = connectedTransform.localPosition;
         gizmo.transform.rotation = connectedTransform.rotation;
-        
-        gizmo.transformType = type;
-        gizmo.axisColor = color;
-        gizmo.SetMatColor(color);
-        gizmo.connectedObj = connectedObj;
 
+        gizmo.transformType = type;
+        gizmo.SetColor(color);
         return gizmo;
+    }
+    public static Color GetStandardAxisColor(RuntimeTransformGizmo gizmo)
+    {
+        if (gizmo == null)
+        { 
+            Debug.LogError("Cant check gizmo color because it is null");
+            return Color.rosyBrown;
+        }
+
+        TransformType gType = gizmo.transformType;
+        if ((gType & TransformType.X) != 0)
+        {
+            return Color.red;
+        }
+        if ((gType & TransformType.Y) != 0)
+        {
+            return Color.green;
+        }
+        if ((gType & TransformType.Z) != 0)
+        {
+            return Color.blue;
+        }
+
+        //indicate a problem
+        return Color.hotPink;
     }
 }

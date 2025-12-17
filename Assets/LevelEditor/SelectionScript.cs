@@ -6,8 +6,9 @@ public class SelectionScript : MonoBehaviour
     private readonly int editorObjectLayer = 1 << 8;
     private readonly int editorGizmoLayer = 1 << 9;
     private Transform lastHitTransform = null;
-    private static Color selectedColor;
-    private static Color hoverColor;
+    private RuntimeTransformGizmo lastHitGizmo = null;
+    [SerializeField] private static Color selectedColor;
+    [SerializeField] private static Color hoverColor;
     private static Color mixedColor;
     private bool multiSelectOn = false;
     private readonly HashSet<ObjectData> selectedObjects = new();
@@ -23,13 +24,15 @@ public class SelectionScript : MonoBehaviour
 
     private void OnEnable()
     {
-        Debug.Log($"Event Manager is null? {EventManager.Instance == null}");
+        //Debug.Log($"Event Manager is null? {EventManager.Instance == null}");
         EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmo);
+        EventManager.Instance.OnObjectDeselected.AddListener(RemoveTransformGizmo);
     }
 
     private void OnDisable()
     {
         EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmo);
+        EventManager.Instance.OnObjectSelected.RemoveListener(RemoveTransformGizmo);
     }
 
     void Update()
@@ -41,8 +44,16 @@ public class SelectionScript : MonoBehaviour
 
     private void SetTransformGizmo(ObjectData obj)
     {
-        RuntimeTransformGizmo.CreateGizmo(RuntimeTransformGizmo.TransformType.LinearY, obj);
+
+        if (obj.connectedGizmo == null) obj.connectedGizmo = RuntimeTransformGizmo.CreateGizmo(RuntimeTransformGizmo.TransformType.LinearY, obj);
+        obj.connectedGizmo.gameObject.SetActive(true);
         Debug.Log(obj.name + " has been selected!");
+    }
+
+    private void RemoveTransformGizmo(ObjectData obj)
+    {
+        Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
+        obj.connectedGizmo.gameObject.SetActive(false);
     }
 
     private void HandleObjectSelecting()
@@ -61,10 +72,8 @@ public class SelectionScript : MonoBehaviour
 
                 SelectObject(currentTransform.GetComponent<ObjectData>());
             }
-            else if (!currentTransform.GetComponent<ObjectData>().IsSelected)
-                HoverObject(currentTransform.GetComponent<ObjectData>(), hoverColor);
             else
-                HoverObject(currentTransform.GetComponent<ObjectData>(), mixedColor);
+                HoverObject(currentTransform.GetComponent<ObjectData>());
 
             lastHitTransform = hitInfo.transform;
         }
@@ -74,71 +83,19 @@ public class SelectionScript : MonoBehaviour
 
             lastHitTransform = null;
         }
-        else if (lastHitTransform != null && !lastHitTransform.GetComponent<ObjectData>().IsSelected)
-            DehoverObject(lastHitTransform.GetComponent<ObjectData>());
         else if (lastHitTransform != null)
-            lastHitTransform.GetComponent<Outline>().OutlineColor = selectedColor;
+            DehoverObject(lastHitTransform.GetComponent<ObjectData>());
 
-    }
-    private void HandleGizmoSelecting()
-    {
-        bool isGizmoHit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hitInfo, 20000f, editorGizmoLayer);
-        if (isGizmoHit)
-        {
-            Transform currentTransform = hitInfo.transform;
 
-            if (Input.GetButton("Fire1"))
-            {
-                SelectGizmo(currentTransform.GetComponent<RuntimeTransformGizmo>());
-            }
-            else if (!currentTransform.GetComponent<RuntimeTransformGizmo>().IsSelected)
-                HoverGizmo(currentTransform.GetComponent<RuntimeTransformGizmo>());
-            
-            lastHitTransform = hitInfo.transform;
-        }
-        else
-        {
-            DeselectGizmo(lastHitTransform?.GetComponent<RuntimeTransformGizmo>());
-            DehoverGizmo(lastHitTransform?.GetComponent<RuntimeTransformGizmo>());
-            lastHitTransform = null;
-        }
-
-    }
-
-    private void SelectGizmo(RuntimeTransformGizmo gizmo)
-    {
-        gizmo.IsSelected = true;
-
-        // Do visual means of showing it's selected
-    }
-
-    private void DeselectGizmo(RuntimeTransformGizmo gizmo)
-    {
-        if (gizmo != null && !gizmo.Equals(null))
-        {
-            gizmo.IsSelected = false;
-        }
-    }
-
-    private void HoverGizmo(RuntimeTransformGizmo gizmo)
-    {
-        Debug.Log("Hovered gizmo: " + gizmo?.name);
-
-        // Do visual means of showing it's being hovered
-    }
-
-    private void DehoverGizmo(RuntimeTransformGizmo gizmo)
-    {
-        Debug.Log("Dehovered gizmo: " + gizmo?.name);
-
-        // Do visual means of showing it's being dehovered
     }
 
     private void SelectObject(ObjectData obj)
     {
         Outline objOutline = obj.transform.GetComponent<Outline>();
-        selectedObjects.Add(obj);
+
         obj.IsSelected = true;
+        selectedObjects.Add(obj);
+
         objOutline.OutlineColor = selectedColor;
         objOutline.OutlineMode = Outline.Mode.OutlineVisible;
     }
@@ -158,17 +115,100 @@ public class SelectionScript : MonoBehaviour
         objOutline.OutlineMode = Outline.Mode.OutlineVisible;
     }
 
-    private void DehoverObject(ObjectData obj) => obj.transform.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineHidden;
+    private void HoverObject(ObjectData obj)
+    {
+        Outline objOutline = obj.transform.GetComponent<Outline>();
+        objOutline.OutlineMode = Outline.Mode.OutlineVisible;
+
+        if (obj.IsSelected) objOutline.OutlineColor = mixedColor;
+        else objOutline.OutlineColor = hoverColor;
+    }
+
+    private void DehoverObject(ObjectData obj)
+    {
+        if (!obj.IsSelected) obj.transform.GetComponent<Outline>().OutlineMode = Outline.Mode.OutlineHidden;
+        else obj.transform.GetComponent<Outline>().OutlineColor = selectedColor;
+    }
     private void DeselectObject(ObjectData obj)
     {
-        if (obj != null && !obj.Equals(null))
+        if (obj == null) return;
+
+        Outline objOutline = obj.transform.GetComponent<Outline>();
+
+        obj.IsSelected = false;
+        selectedObjects.Remove(obj);
+
+        objOutline.OutlineColor = hoverColor;
+        objOutline.OutlineMode = Outline.Mode.OutlineHidden;
+    }
+
+    private void HandleGizmoSelecting()
+    {
+        if (selectedObjects.Count == 0)
         {
-            Outline objOutline = obj.transform.GetComponent<Outline>();
-            selectedObjects.Remove(obj);
-            obj.IsSelected = false;
-            objOutline.OutlineColor = hoverColor;
-            objOutline.OutlineMode = Outline.Mode.OutlineHidden;
+            lastHitGizmo = null;
+            return;
         }
+
+        bool isGizmoHit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hitInfo, 20000f, editorGizmoLayer);
+        if (isGizmoHit)
+        {
+            RuntimeTransformGizmo rtg = hitInfo.transform.GetComponentInParent<RuntimeTransformGizmo>();
+
+            if (Input.GetButton("Fire1"))
+                SelectGizmo(rtg);
+            else if (rtg.IsSelected)
+            {
+                DeselectGizmo(rtg);
+                HoverGizmo(rtg);
+            }
+
+            lastHitGizmo = rtg;
+        }
+        else if (lastHitGizmo != null && Input.GetButton("Fire1"))
+        {
+            DehoverGizmo(lastHitGizmo);
+        }
+        else if (lastHitGizmo != null)
+        {
+            DeselectGizmo(lastHitGizmo);
+            DehoverGizmo(lastHitGizmo);
+            lastHitGizmo = null;
+        }
+
+    }
+
+    private void SelectGizmo(RuntimeTransformGizmo gizmo)
+    {
+        Debug.Log($"Gizmo Selected: {gizmo.gameObject.name}");
+        gizmo.IsSelected = true;
+
+        // Do visual means of showing it's selected
+    }
+
+    private void DeselectGizmo(RuntimeTransformGizmo gizmo)
+    {
+        if (gizmo != null && !gizmo.Equals(null))
+        {
+            gizmo.IsSelected = false;
+        }
+    }
+
+    private void HoverGizmo(RuntimeTransformGizmo gizmo)
+    {
+        Debug.Log($"Gizmo being hovered: {gizmo.gameObject.name}");
+        gizmo.SetColor(Color.lightGoldenRodYellow);
+
+
+        // Do visual means of showing it's being hovered
+    }
+
+    private void DehoverGizmo(RuntimeTransformGizmo gizmo)
+    {
+        Debug.Log($"Gizmo being Dehovered: {gizmo.gameObject.name}");
+        gizmo.SetColor(RuntimeTransformGizmo.GetStandardAxisColor(gizmo));
+
+        // Do visual means of showing it's being dehovered
     }
 
     public static Color GetHoverColor()

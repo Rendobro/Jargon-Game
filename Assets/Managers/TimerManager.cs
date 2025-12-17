@@ -102,11 +102,6 @@ public class TimerManager : MonoBehaviour, IDataPersistence
         {
             timerText.text = FormatTimer(timers[currentLevelIndex-1]);
         }
-        else
-        {
-            timerText = GameObject.FindGameObjectWithTag("Timer").GetComponent<TextMeshProUGUI>();
-            timerText.text = FormatTimer(timers[currentLevelIndex-1]);
-        }
     }
 
     private void SetTimerText(Scene scene, LoadSceneMode mode)

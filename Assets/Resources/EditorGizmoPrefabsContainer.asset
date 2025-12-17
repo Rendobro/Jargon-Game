@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ba2fb26ce9c6b497f9e4050cb7deb8e4, type: 3}
   m_Name: EditorGizmoPrefabsContainer
   m_EditorClassIdentifier: 
-  rtgPrefabs: []
+  gizmoBaseMaterial: {fileID: 2100000, guid: d40051c7c1e444ac0b62c315d146b301, type: 2}
+  rtgPrefabs:
+  - {fileID: 3991943058842275176, guid: de29a1b6b7e1d4e1c8f3cf71a1496c36, type: 3}

@@ -9,14 +9,16 @@ using System;
 
 public class PlayerStatsManager : MonoBehaviour, IDataPersistence
 {
-    public static PlayerStatsManager Instance {get; private set;}
-    public const int mainMenuIndex = 0;
+    public static PlayerStatsManager Instance { get; private set; }
+    public const int mainMenuIndex = 1;
+    public const int editorIndex = 0;
+
     [SerializeField] private PlayerStatsContainer playerStats;
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Debug.LogError("There is already a PlayerStatsManager in this script.\n"+
+            Debug.LogError("There is already a PlayerStatsManager in this script.\n" +
             "Destroying current instance.");
             Destroy(gameObject);
             return;
@@ -49,11 +51,11 @@ public class PlayerStatsManager : MonoBehaviour, IDataPersistence
 
     public int GetLastUnlockedLevelIndex() => playerStats.lastLevelUnlocked;
 
-    public void SetHighscore(int levelIndex, float value) => playerStats.playerHighscores[levelIndex-1] = value;
+    public void SetHighscore(int levelIndex, float value) => playerStats.playerHighscores[levelIndex - 1] = value;
 
     public float[] GetHighscores() => playerStats.playerHighscores;
 
-    public float GetHighscore(int levelIndex) => playerStats.playerHighscores[levelIndex-1];
+    public float GetHighscore(int levelIndex) => playerStats.playerHighscores[levelIndex - 1];
 
     public void SetGravity(float newGravity) => playerStats.gravity = newGravity;
 

@@ -7,8 +7,6 @@ public class EditorManager : MonoBehaviour, IDataPersistence
     public static EditorManager Instance { get; private set; }
 
     [SerializeField] private int levelNum = 0;
-
-    [SerializeField] private EditorPrefabsContainer editorPrefabsContainer;
     private List<ObjectData> editorPrefabs;
 
     [SerializeField] private List<LevelData> playerLevels = new();
@@ -62,8 +60,8 @@ public class EditorManager : MonoBehaviour, IDataPersistence
     }
     private void InitializeLists()
     {
-        editorPrefabs = editorPrefabsContainer.editorPrefabs;
-        Debug.Log("Editor Prefabs: \n"+editorPrefabs.ToLineSeparatedString());
+        editorPrefabs = EditorPrefabsContainer.Instance.editorPrefabs;
+        //Debug.Log("Editor Prefabs: \n"+editorPrefabs.ToLineSeparatedString());
         allCurrentSceneObjects = FindObjectsByType<ObjectData>(FindObjectsSortMode.None);
     }
 
@@ -114,6 +112,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
         newObjData.rotation = oldObjData.rotation;
         newObjData.objID = oldObjData.objID;
         newObjData.IsSelected = oldObjData.IsSelected;
+        newObjData.connectedGizmo = oldObjData.connectedGizmo;
     }
 
     public void SaveData(ref GameData data)

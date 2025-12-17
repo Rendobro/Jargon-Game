@@ -10,7 +10,8 @@ public class EditorControllerScript : MonoBehaviour, IDataPersistence, InputSyst
     private float editorSensitivity = 400f;
     private float editorSpeed = 3f;
     private bool isRightClickHeld = false;
-    private InputSystem_Actions inputActions;
+
+    //private InputSystem_Actions inputActions;
 
     // private void Awake()
     // {
@@ -84,9 +85,7 @@ public class EditorControllerScript : MonoBehaviour, IDataPersistence, InputSyst
         data.editorSensitivity = editorSensitivity;
     }
 
-#pragma warning disable UNT0006 // Incorrect message signature
     public void OnMouseDrag(InputAction.CallbackContext context)
-#pragma warning restore UNT0006 // Incorrect message signature
     {
         if (context.performed)
         {

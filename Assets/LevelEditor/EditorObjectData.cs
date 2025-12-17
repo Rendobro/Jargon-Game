@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 [System.Serializable]
@@ -14,13 +15,20 @@ public class ObjectData : MonoBehaviour
             if (isSelected != value)
             {
                 isSelected = value;
-                if (EventManager.Instance != null && value == true)
+                if (EventManager.Instance == null) return;
+                if (value == true)
                 {
                     EventManager.Instance.OnObjectSelected.Invoke(this);
                 }
+                else
+                {
+                    EventManager.Instance.OnObjectDeselected.Invoke(this);
+                }
+                 
             }
         }
     }
+    public RuntimeTransformGizmo connectedGizmo;
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;

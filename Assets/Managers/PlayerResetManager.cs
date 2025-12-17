@@ -29,6 +29,7 @@ public class PlayerResetManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+        worldSpawn = transform;
         Instance = this;
         DontDestroyOnLoad(gameObject);
     }
@@ -120,12 +121,14 @@ public class PlayerResetManager : MonoBehaviour
             currPlayer = GameObject.FindWithTag("Player");
             if (currPlayer == null)
             {
+                Debug.Log($"Scene index null {scene.buildIndex}");
                 currPlayer = Instantiate(playerPrefab, cm.Instance.GetCurrentCheckpointTransform().position, Quaternion.identity);
                 ctrl = currPlayer.GetComponent<CharacterController>();
                 cam = currPlayer.GetComponentInChildren<Camera>();
             }
             else
             {
+                Debug.Log($"Scene index not null{scene.buildIndex}");
                 GameObject newPlayer = currPlayer;
                 ctrl = newPlayer.GetComponent<CharacterController>();
                 cam = newPlayer.GetComponentInChildren<Camera>();

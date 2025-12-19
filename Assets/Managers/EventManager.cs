@@ -3,7 +3,7 @@ using UnityEngine.Events;
 
 public class EventManager : MonoBehaviour
 {
-    public static EventManager Instance {get; private set;} 
+    public static EventManager Instance { get; private set; }
 
     public UnityEvent OnPlayerReset;
     public UnityEvent<int> OnPlayerHardReset;
@@ -20,6 +20,10 @@ public class EventManager : MonoBehaviour
     public UnityEvent<RuntimeTransformGizmo> OnGizmoSelected;
     public UnityEvent<ObjectData> OnObjectDeselected;
     public UnityEvent<RuntimeTransformGizmo> OnGizmoDeselected;
+    public UnityEvent OnUndoUnavailable;
+    public UnityEvent OnRedoUnavailable;
+
+
 
     private void Awake()
     {
@@ -47,5 +51,7 @@ public class EventManager : MonoBehaviour
         OnGizmoSelected = new UnityEvent<RuntimeTransformGizmo>();
         OnObjectDeselected = new UnityEvent<ObjectData>();
         OnGizmoDeselected = new UnityEvent<RuntimeTransformGizmo>();
+        OnUndoUnavailable = new UnityEvent();
+        OnRedoUnavailable = new UnityEvent();
     }
 }

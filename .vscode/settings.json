@@ -56,7 +56,7 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "Jargon.sln",
+    "dotnet.defaultSolution": "Jargon-Game.sln",
     "cSpell.words": [
         "Behaviour",
         "bruh",

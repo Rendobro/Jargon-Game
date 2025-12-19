@@ -79,7 +79,7 @@ Material:
     - _ZWrite: 1
     m_Colors:
     - _AxesColor: {r: 0.7075472, g: 0.25698647, b: 0.2744494, a: 1}
-    - _AxisColor: {r: 0.76099706, g: 0.73891956, b: 0.764151, a: 1}
+    - _AxisColor: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
   m_BuildTextureStacks: []

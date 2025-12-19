@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using Unity.Services.CloudSave;
 
 [CreateAssetMenu(fileName = "EditorPrefabsContainer", menuName = "Scriptable Objects/EditorPrefabsContainer")]
-public class EditorPrefabsContainer : ScriptableObject
+public class EditorObjectPrefabsContainer : ScriptableObject
 {
-    private static EditorPrefabsContainer _instance;
+    private static EditorObjectPrefabsContainer _instance;
 
-    public static EditorPrefabsContainer Instance
+    public static EditorObjectPrefabsContainer Instance
     {
         get
         {
             if (_instance == null)
             {
-                _instance = Resources.Load<EditorPrefabsContainer>(
+                _instance = Resources.Load<EditorObjectPrefabsContainer>(
                     "EditorPrefabsContainer"
                 );
 

@@ -1,7 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
-public class SelectionScript : MonoBehaviour
+using System;
+public class EditorSelectionScript : MonoBehaviour
 {
     private readonly int editorObjectLayer = 1 << 8;
     private readonly int editorGizmoLayer = 1 << 9;
@@ -26,12 +27,14 @@ public class SelectionScript : MonoBehaviour
     {
         //Debug.Log($"Event Manager is null? {EventManager.Instance == null}");
         EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmo);
+        EventManager.Instance.OnGizmoSelected.AddListener(SetSelectedGizmoColor);
         EventManager.Instance.OnObjectDeselected.AddListener(RemoveTransformGizmo);
     }
 
     private void OnDisable()
     {
         EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmo);
+        EventManager.Instance.OnGizmoSelected.RemoveListener(SetSelectedGizmoColor);
         EventManager.Instance.OnObjectSelected.RemoveListener(RemoveTransformGizmo);
     }
 
@@ -45,14 +48,18 @@ public class SelectionScript : MonoBehaviour
     private void SetTransformGizmo(ObjectData obj)
     {
 
-        if (obj.connectedGizmo == null) obj.connectedGizmo = RuntimeTransformGizmo.CreateGizmo(RuntimeTransformGizmo.TransformType.LinearY, obj);
+        if (obj.connectedGizmo == null)
+        {
+            obj.connectedGizmo = RuntimeTransformGizmo.
+            CreateGizmo(RuntimeTransformGizmo.TransformType.LinearZ, obj);
+        }
         obj.connectedGizmo.gameObject.SetActive(true);
-        Debug.Log(obj.name + " has been selected!");
+        //Debug.Log(obj.name + " has been selected!");
     }
 
     private void RemoveTransformGizmo(ObjectData obj)
     {
-        Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
+        //Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
         obj.connectedGizmo.gameObject.SetActive(false);
     }
 
@@ -155,11 +162,15 @@ public class SelectionScript : MonoBehaviour
         {
             RuntimeTransformGizmo rtg = hitInfo.transform.GetComponentInParent<RuntimeTransformGizmo>();
 
-            if (Input.GetButton("Fire1"))
+            if (Input.GetButtonDown("Fire1"))
                 SelectGizmo(rtg);
-            else if (rtg.IsSelected)
+            else if (rtg.IsSelected && !rtg.IsHeld)
             {
                 DeselectGizmo(rtg);
+                HoverGizmo(rtg);
+            }
+            else
+            {
                 HoverGizmo(rtg);
             }
 
@@ -180,10 +191,8 @@ public class SelectionScript : MonoBehaviour
 
     private void SelectGizmo(RuntimeTransformGizmo gizmo)
     {
-        Debug.Log($"Gizmo Selected: {gizmo.gameObject.name}");
+        //Debug.Log($"Gizmo Selected: {gizmo.gameObject.name}");
         gizmo.IsSelected = true;
-
-        // Do visual means of showing it's selected
     }
 
     private void DeselectGizmo(RuntimeTransformGizmo gizmo)
@@ -196,19 +205,21 @@ public class SelectionScript : MonoBehaviour
 
     private void HoverGizmo(RuntimeTransformGizmo gizmo)
     {
-        Debug.Log($"Gizmo being hovered: {gizmo.gameObject.name}");
-        gizmo.SetColor(Color.lightGoldenRodYellow);
-
-
-        // Do visual means of showing it's being hovered
+        //Debug.Log($"Gizmo being hovered: {gizmo.gameObject.name}");
+        gizmo.SetAxisColor(gizmo.axisColor * 0.5f);
     }
 
     private void DehoverGizmo(RuntimeTransformGizmo gizmo)
     {
-        Debug.Log($"Gizmo being Dehovered: {gizmo.gameObject.name}");
-        gizmo.SetColor(RuntimeTransformGizmo.GetStandardAxisColor(gizmo));
+        //Debug.Log($"Gizmo being Dehovered: {gizmo.gameObject.name}");
+        gizmo.SetAxisColor(RuntimeTransformGizmo.GetStandardAxisColor(gizmo));
+    }
 
-        // Do visual means of showing it's being dehovered
+    private void SetSelectedGizmoColor(RuntimeTransformGizmo gizmo)
+    {
+        float brightness = 0.25f;
+        Color newCol = Color.Lerp(RuntimeTransformGizmo.GetStandardAxisColor(gizmo), Color.white, Mathf.Clamp01(brightness));
+        gizmo.SetAxisColor(newCol);
     }
 
     public static Color GetHoverColor()

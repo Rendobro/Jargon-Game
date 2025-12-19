@@ -24,7 +24,6 @@ public class ObjectInfo_JB : ObjectInfo
     {
         Respawn = 1 << 0,
         MovingPlatform = 1 << 1,
-        Timer = 1 << 2,
-
+        Timer = 1 << 2
     }
 }

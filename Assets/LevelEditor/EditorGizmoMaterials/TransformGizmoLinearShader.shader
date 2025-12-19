@@ -51,7 +51,7 @@ Shader "Unlit/TransformGizmoLinearShader"
                 float3 n = normalize(i.normal);
                 float3 col = n;
 
-                col += _AxisColor;
+                col *= _AxisColor;
 
                 return _AxisColor;
             }

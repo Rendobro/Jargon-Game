@@ -7,8 +7,8 @@ public class EditorControllerScript : MonoBehaviour, IDataPersistence, InputSyst
     private float velocity = 0f;
     private const float acceleration = 1.5f;
     private float xRotation = 0f;
-    private float editorSensitivity = 400f;
-    private float editorSpeed = 3f;
+    [SerializeField] private float editorSensitivity = 400f;
+    [SerializeField] private float editorSpeed = 3f;
     private bool isRightClickHeld = false;
 
     //private InputSystem_Actions inputActions;

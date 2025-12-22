@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using CommandTypes;
 using System.Collections;
+using System;
 public class EditorManager : MonoBehaviour, IDataPersistence
 {
     // This class manages level loading and object manipulation.
@@ -18,10 +19,10 @@ public class EditorManager : MonoBehaviour, IDataPersistence
     private ObjectData[] allCurrentSceneObjects;
 
     [SerializeField] private float objMoveSensitivity = 30f;
-    [SerializeField] private float objRotateSensitivity = 30f;
-    [SerializeField] private float objScaleSensitivity = 30f;
+    //[SerializeField] private float objRotateSensitivity = 30f;
+    //[SerializeField] private float objScaleSensitivity = 30f;
 
-    private Dictionary<RuntimeTransformGizmo, Coroutine> activeDrags = new();
+    private readonly Dictionary<RuntimeTransformGizmo, Coroutine> activeDrags = new();
 
     private readonly Stack<IEditorCommand> performedCommands = new();
     private readonly Stack<IEditorCommand> undoneCommands = new();
@@ -146,7 +147,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
         newObjData.rotation = oldObjData.rotation;
         newObjData.objID = oldObjData.objID;
         newObjData.IsSelected = oldObjData.IsSelected;
-        newObjData.connectedGizmo = oldObjData.connectedGizmo;
+        newObjData.connectedGizmos = new Dictionary<RuntimeTransformGizmo.TransformType, RuntimeTransformGizmo>(oldObjData.connectedGizmos);
     }
 
     public void StartTransform(RuntimeTransformGizmo gizmo)
@@ -197,11 +198,13 @@ public class EditorManager : MonoBehaviour, IDataPersistence
                 (Camera.main.WorldToScreenPoint(gizmoTransform.up + gizmoTransform.position)
                 - Camera.main.WorldToScreenPoint(gizmoTransform.position)).normalized;
 
+            float distToObj = (Camera.main.transform.position - gizmo.transform.position).magnitude;
+
             //Calculate how much the delta is in the direction of the axis
             float initialMouseDelta = Vector2.Dot(Input.mousePositionDelta, gizmoAxisToScreen);
 
             //Gizmo should naturally face "up" in the correct direction based on instantiation
-            Vector3 worldDelta = gizmoTransform.up * initialMouseDelta * objMoveSensitivity * Time.deltaTime;
+            Vector3 worldDelta = gizmoTransform.up * initialMouseDelta * distToObj * objMoveSensitivity * Time.deltaTime;
 
             targetTransform.Translate(worldDelta, Space.World);
             yield return null;

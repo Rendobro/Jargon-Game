@@ -26,14 +26,14 @@ public class EditorSelectionScript : MonoBehaviour
     private void OnEnable()
     {
         //Debug.Log($"Event Manager is null? {EventManager.Instance == null}");
-        EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmo);
+        EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmos);
         EventManager.Instance.OnGizmoSelected.AddListener(SetSelectedGizmoColor);
         EventManager.Instance.OnObjectDeselected.AddListener(RemoveTransformGizmo);
     }
 
     private void OnDisable()
     {
-        EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmo);
+        EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmos);
         EventManager.Instance.OnGizmoSelected.RemoveListener(SetSelectedGizmoColor);
         EventManager.Instance.OnObjectSelected.RemoveListener(RemoveTransformGizmo);
     }
@@ -41,30 +41,13 @@ public class EditorSelectionScript : MonoBehaviour
     void Update()
     {
         multiSelectOn = Input.GetButton("MultiSelect");
-        HandleObjectSelecting();
         HandleGizmoSelecting();
-    }
-
-    private void SetTransformGizmo(ObjectData obj)
-    {
-
-        if (obj.connectedGizmo == null)
-        {
-            obj.connectedGizmo = RuntimeTransformGizmo.
-            CreateGizmo(RuntimeTransformGizmo.TransformType.LinearZ, obj);
-        }
-        obj.connectedGizmo.gameObject.SetActive(true);
-        //Debug.Log(obj.name + " has been selected!");
-    }
-
-    private void RemoveTransformGizmo(ObjectData obj)
-    {
-        //Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
-        obj.connectedGizmo.gameObject.SetActive(false);
+        HandleObjectSelecting();
     }
 
     private void HandleObjectSelecting()
     {
+        if (lastHitGizmo != null && lastHitGizmo.IsHeld) return;
         bool isObjectHit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit hitInfo, 20000f, editorObjectLayer);
         if (isObjectHit)
         {
@@ -149,6 +132,40 @@ public class EditorSelectionScript : MonoBehaviour
         objOutline.OutlineMode = Outline.Mode.OutlineHidden;
     }
 
+    private void SetTransformGizmos(ObjectData obj)
+    {
+        Dictionary<RuntimeTransformGizmo.TransformType, RuntimeTransformGizmo> connectedGizmos = obj.connectedGizmos;
+
+        foreach (int value in Enum.GetValues(typeof(RuntimeTransformGizmo.TransformType)))
+        {
+            if (value != (int)RuntimeTransformGizmo.TransformType.LinearX &&
+            value != (int)RuntimeTransformGizmo.TransformType.LinearY &&
+            value != (int)RuntimeTransformGizmo.TransformType.LinearZ &&
+            value != (int)RuntimeTransformGizmo.TransformType.RotationX) continue;
+            RuntimeTransformGizmo.TransformType type = (RuntimeTransformGizmo.TransformType)value;
+
+            if (connectedGizmos.ContainsKey(type))
+            {
+                connectedGizmos[type].gameObject.SetActive(true);
+                continue;
+            }
+
+            connectedGizmos[type] = RuntimeTransformGizmo.
+            CreateGizmo(type, obj);
+
+            Debug.Log("test: " + connectedGizmos[type]);
+
+            connectedGizmos[type].gameObject.SetActive(true);
+        }
+    }
+
+    private void RemoveTransformGizmo(ObjectData obj)
+    {
+        //Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
+        foreach (RuntimeTransformGizmo.TransformType key in obj.connectedGizmos.Keys)
+            obj.connectedGizmos[key].gameObject.SetActive(false);
+    }
+
     private void HandleGizmoSelecting()
     {
         if (selectedObjects.Count == 0)
@@ -161,6 +178,13 @@ public class EditorSelectionScript : MonoBehaviour
         if (isGizmoHit)
         {
             RuntimeTransformGizmo rtg = hitInfo.transform.GetComponentInParent<RuntimeTransformGizmo>();
+
+            if (lastHitGizmo != null)
+            {
+                if (lastHitGizmo.IsHeld && lastHitGizmo != rtg) return;
+
+                else if (lastHitGizmo != rtg) DehoverGizmo(lastHitGizmo);
+            }
 
             if (Input.GetButtonDown("Fire1"))
                 SelectGizmo(rtg);
@@ -176,11 +200,7 @@ public class EditorSelectionScript : MonoBehaviour
 
             lastHitGizmo = rtg;
         }
-        else if (lastHitGizmo != null && Input.GetButton("Fire1"))
-        {
-            DehoverGizmo(lastHitGizmo);
-        }
-        else if (lastHitGizmo != null)
+        else if (lastHitGizmo != null && !lastHitGizmo.IsHeld)
         {
             DeselectGizmo(lastHitGizmo);
             DehoverGizmo(lastHitGizmo);

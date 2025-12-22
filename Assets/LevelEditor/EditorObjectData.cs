@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -17,21 +18,24 @@ public class ObjectData : MonoBehaviour
                 isSelected = value;
                 if (EventManager.Instance == null) return;
                 if (value == true)
-                {
                     EventManager.Instance.OnObjectSelected.Invoke(this);
-                }
                 else
-                {
                     EventManager.Instance.OnObjectDeselected.Invoke(this);
-                }
-                 
+
             }
         }
     }
-    public RuntimeTransformGizmo connectedGizmo;
+    public GameObject gizmosParent;
+    public Dictionary<RuntimeTransformGizmo.TransformType, RuntimeTransformGizmo> connectedGizmos = new();
     public Vector3 position;
     public Quaternion rotation;
     public Vector3 scale;
+    private void Awake()
+    {
+        gizmosParent = new GameObject("GizmoParent");
+        gizmosParent.transform.parent = this.transform;
+        gizmosParent.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+    }
 }
 
 [System.Serializable]

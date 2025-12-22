@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization.Formatters.Binary;
+using Newtonsoft.Json.Converters;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class RuntimeTransformGizmo : MonoBehaviour
 {
@@ -9,16 +12,13 @@ public class RuntimeTransformGizmo : MonoBehaviour
     private Material axisMaterial;
     private Renderer[] childRenderers;
     public ObjectData Target { get; private set; }
-
+    private readonly float apparentSize = 0.3f;
     public TransformType transformType;
-
     private bool isSelected;
     public bool IsHeld => isSelected && Input.GetButton("Fire1");
-
     public bool IsSelected
     {
         get => isSelected;
-
         set
         {
             if (isSelected != value)
@@ -26,19 +26,12 @@ public class RuntimeTransformGizmo : MonoBehaviour
                 isSelected = value;
                 if (EventManager.Instance == null) return;
                 if (value == true)
-                {
                     EventManager.Instance.OnGizmoSelected.Invoke(this);
-                }
                 else
-                {
                     EventManager.Instance.OnGizmoDeselected.Invoke(this);
-                }
             }
         }
     }
-
-    private static readonly HashSet<ObjectData> activeObjects = new();
-
     public enum TransformType
     {
         Linear = 1 << 0,
@@ -58,7 +51,6 @@ public class RuntimeTransformGizmo : MonoBehaviour
         ScaleZ = Scale | Z,
     }
 
-
     private void Awake()
     {
         childRenderers = GetComponentsInChildren<Renderer>(includeInactive: true);
@@ -72,6 +64,24 @@ public class RuntimeTransformGizmo : MonoBehaviour
         SetAxisColor(axisColor);
     }
 
+    private void LateUpdate()
+    {
+        Camera cam = Camera.main;
+
+        // Weird matrix math that magically makes gizmo
+        // scale look normal with non-uniform object scalings
+        Matrix4x4 invRS = Matrix4x4.Rotate(Target.transform.rotation).inverse *
+                          Matrix4x4.Scale(Target.transform.lossyScale).inverse;
+
+        Vector3 signVec = new Vector3(Math.Sign(invRS.lossyScale.x) * Math.Sign(Target.transform.lossyScale.x),Math.Sign(Target.transform.lossyScale.y),Math.Sign(Target.transform.lossyScale.z));
+        Target.gizmosParent.transform.localScale = Vector3.Scale(invRS.lossyScale, signVec);
+
+        // Screen perspective scaling
+        float distance = Vector3.Distance(cam.transform.position, transform.position);
+        transform.localScale = Vector3.one * distance * apparentSize;
+
+    }
+
     public void SetAxisColor(Color color)
     {
         axisColor = color;
@@ -81,11 +91,9 @@ public class RuntimeTransformGizmo : MonoBehaviour
     }
     public static RuntimeTransformGizmo CreateGizmo(TransformType type, ObjectData connectedObj)
     {
-        if (activeObjects.Contains(connectedObj)) return null;
-        Transform connectedTransform = connectedObj.transform;
+        if (connectedObj.connectedGizmos.ContainsKey(type)) return connectedObj.connectedGizmos[type];
         Quaternion coolRot;
-
-        activeObjects.Add(connectedObj);
+        Transform gizmoParentTransform = connectedObj.gizmosParent.transform;
         TransformType axisDirectionFlags = type & (TransformType.X | TransformType.Y | TransformType.Z);
         TransformType axisTypeFlags = type & (TransformType.Linear | TransformType.Rotation | TransformType.Scale);
 
@@ -94,18 +102,15 @@ public class RuntimeTransformGizmo : MonoBehaviour
         switch (axisDirectionFlags)
         {
             case TransformType.X:
-                coolRot = Quaternion.Euler(0f, 0f, 0f);  // X along local right
-
+                coolRot = Quaternion.Euler(0f, 0f, 90f);
                 color = Color.red;
                 break;
             case TransformType.Y:
-                coolRot = Quaternion.Euler(0f, 0f, 90f);  // X along local right
-
+                coolRot = Quaternion.Euler(0f, 0f, 0f);
                 color = Color.green;
                 break;
             case TransformType.Z:
-                coolRot = Quaternion.Euler(0f, -90f, 0f);  // X along local right
-
+                coolRot = Quaternion.Euler(-90f, 0f, 0f);
                 color = Color.blue;
                 break;
             default:
@@ -118,33 +123,29 @@ public class RuntimeTransformGizmo : MonoBehaviour
         switch (axisTypeFlags)
         {
             case TransformType.Linear:
-                Vector3 directionLinear = axisDirs;
-
-                //assign this to a prefab instance in the gizmo container
-                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[0], connectedTransform);
-                gizmo.transform.localRotation = coolRot;
+                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[0], gizmoParentTransform);
+                gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
                 Debug.Log($"Gizmo instantiated: {gizmo.name} \nGizmo's parent {gizmo.transform.parent.name}");
                 break;
             case TransformType.Rotation:
                 Vector3 circleNormal = axisDirs;
-
-                //assign this to a prefab instance in the gizmo container
-                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[1], connectedTransform);
+                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[1], gizmoParentTransform);
+                gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
                 break;
             case TransformType.Scale:
                 Vector3 directionScale = axisDirs;
-
-                //assign this to a prefab instance in the gizmo container
-                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[2], connectedTransform);
+                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[2], gizmoParentTransform);
+                gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
                 break;
             default:
                 throw new System.ArgumentException("Gizmo with no type detected. Not supposed to happen.");
         }
-
-        gizmo.transform.position = connectedTransform.localPosition;
+        gizmo.transform.localPosition = Vector3.zero;
         gizmo.Target = connectedObj;
         gizmo.transformType = type;
         gizmo.SetAxisColor(color);
+        connectedObj.connectedGizmos[type] = gizmo;
+        Debug.Log($"gizmo made: {gizmo}");
         return gizmo;
     }
     public static Color GetStandardAxisColor(RuntimeTransformGizmo gizmo)
@@ -171,5 +172,12 @@ public class RuntimeTransformGizmo : MonoBehaviour
 
         //indicate a problem
         return Color.hotPink;
+    }
+
+    public override string ToString()
+    {
+        return "TransformType: " + transformType.HumanName() +
+        "\nAxisMaterial: " + axisMaterial +
+        "\nTarget Object: " + Target;
     }
 }

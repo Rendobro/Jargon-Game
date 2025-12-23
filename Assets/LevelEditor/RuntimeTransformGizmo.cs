@@ -32,6 +32,7 @@ public class RuntimeTransformGizmo : MonoBehaviour
             }
         }
     }
+    public Vector3 LocalUp {get; private set;}
     public enum TransformType
     {
         Linear = 1 << 0,
@@ -140,6 +141,7 @@ public class RuntimeTransformGizmo : MonoBehaviour
             default:
                 throw new System.ArgumentException("Gizmo with no type detected. Not supposed to happen.");
         }
+        gizmo.LocalUp = axisDirs;
         gizmo.transform.localPosition = Vector3.zero;
         gizmo.Target = connectedObj;
         gizmo.transformType = type;

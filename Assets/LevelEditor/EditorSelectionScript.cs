@@ -14,6 +14,25 @@ public class EditorSelectionScript : MonoBehaviour
     private bool multiSelectOn = false;
     private readonly HashSet<ObjectData> selectedObjects = new();
 
+    private static SelectionState selectionState;
+    public static SelectionState EditorSelectionState
+    {
+        get => selectionState;
+        set
+        {
+            if (selectionState == value) return;
+
+            selectionState = value;
+            EventManager.Instance.OnSelectionStateChanged.Invoke();
+        }
+    }
+    public enum SelectionState
+    {
+        Linear,
+        Rotation,
+        Scale
+    }
+
     private void Awake()
     {
         selectedColor = Color.green;
@@ -29,13 +48,15 @@ public class EditorSelectionScript : MonoBehaviour
         EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmos);
         EventManager.Instance.OnGizmoSelected.AddListener(SetSelectedGizmoColor);
         EventManager.Instance.OnObjectDeselected.AddListener(RemoveTransformGizmo);
+        EventManager.Instance.OnSelectionStateChanged.AddListener(AlterTransformGizmos);
     }
 
     private void OnDisable()
     {
         EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmos);
         EventManager.Instance.OnGizmoSelected.RemoveListener(SetSelectedGizmoColor);
-        EventManager.Instance.OnObjectSelected.RemoveListener(RemoveTransformGizmo);
+        EventManager.Instance.OnObjectDeselected.RemoveListener(RemoveTransformGizmo);
+        EventManager.Instance.OnSelectionStateChanged.RemoveListener(AlterTransformGizmos);
     }
 
     void Update()
@@ -43,6 +64,10 @@ public class EditorSelectionScript : MonoBehaviour
         multiSelectOn = Input.GetButton("MultiSelect");
         HandleGizmoSelecting();
         HandleObjectSelecting();
+        if (Input.GetKeyDown(KeyCode.J)) EditorSelectionState = SelectionState.Linear;
+        if (Input.GetKeyDown(KeyCode.K)) EditorSelectionState = SelectionState.Rotation;
+        if (Input.GetKeyDown(KeyCode.L)) EditorSelectionState = SelectionState.Scale;
+
     }
 
     private void HandleObjectSelecting()
@@ -136,13 +161,38 @@ public class EditorSelectionScript : MonoBehaviour
     {
         Dictionary<RuntimeTransformGizmo.TransformType, RuntimeTransformGizmo> connectedGizmos = obj.connectedGizmos;
 
-        foreach (int value in Enum.GetValues(typeof(RuntimeTransformGizmo.TransformType)))
+        foreach (RuntimeTransformGizmo.TransformType type in Enum.GetValues(typeof(RuntimeTransformGizmo.TransformType)))
         {
-            if (value != (int)RuntimeTransformGizmo.TransformType.LinearX &&
-            value != (int)RuntimeTransformGizmo.TransformType.LinearY &&
-            value != (int)RuntimeTransformGizmo.TransformType.LinearZ &&
-            value != (int)RuntimeTransformGizmo.TransformType.RotationX) continue;
-            RuntimeTransformGizmo.TransformType type = (RuntimeTransformGizmo.TransformType)value;
+            // temporary while I implement all of them
+            if (type == RuntimeTransformGizmo.TransformType.Linear) continue;
+
+            if (type == RuntimeTransformGizmo.TransformType.Rotation) continue;
+
+            if (type == RuntimeTransformGizmo.TransformType.Scale) continue;
+
+            if (type == RuntimeTransformGizmo.TransformType.X) continue;
+
+            if (type == RuntimeTransformGizmo.TransformType.Y) continue;
+
+            if (type == RuntimeTransformGizmo.TransformType.Z) continue;
+
+            Debug.Log($"type: {(RuntimeTransformGizmo.TransformType)type}");
+
+            switch (EditorSelectionState)
+            {
+                case SelectionState.Linear:
+                    if ((type & RuntimeTransformGizmo.TransformType.Linear) == 0) continue;
+                    break;
+                case SelectionState.Rotation:
+                    if ((type & RuntimeTransformGizmo.TransformType.Rotation) == 0) continue;
+                    break;
+                case SelectionState.Scale:
+                    if ((type & RuntimeTransformGizmo.TransformType.Scale) == 0) continue;
+                    break;
+
+                default:
+                    break;
+            }
 
             if (connectedGizmos.ContainsKey(type))
             {
@@ -150,8 +200,7 @@ public class EditorSelectionScript : MonoBehaviour
                 continue;
             }
 
-            connectedGizmos[type] = RuntimeTransformGizmo.
-            CreateGizmo(type, obj);
+            connectedGizmos[type] = RuntimeTransformGizmo.CreateGizmo(type, obj);
 
             Debug.Log("test: " + connectedGizmos[type]);
 
@@ -164,6 +213,15 @@ public class EditorSelectionScript : MonoBehaviour
         //Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
         foreach (RuntimeTransformGizmo.TransformType key in obj.connectedGizmos.Keys)
             obj.connectedGizmos[key].gameObject.SetActive(false);
+    }
+
+    private void AlterTransformGizmos()
+    {
+        foreach (ObjectData obj in selectedObjects)
+        {
+            RemoveTransformGizmo(obj);
+            SetTransformGizmos(obj);
+        }
     }
 
     private void HandleGizmoSelecting()

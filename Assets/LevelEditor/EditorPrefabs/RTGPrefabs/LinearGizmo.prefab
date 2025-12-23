@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6502190364954350309}
   - component: {fileID: 3991943058842275176}
   m_Layer: 9
-  m_Name: LinearAxisGizmo
+  m_Name: LinearGizmo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

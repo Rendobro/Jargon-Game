@@ -496,6 +496,9 @@ MonoBehaviour:
   OnRedoUnavailable:
     m_PersistentCalls:
       m_Calls: []
+  OnSelectionStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &931600744
 Transform:
   m_ObjectHideFlags: 0

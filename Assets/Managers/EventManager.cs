@@ -22,6 +22,7 @@ public class EventManager : MonoBehaviour
     public UnityEvent<RuntimeTransformGizmo> OnGizmoDeselected;
     public UnityEvent OnUndoUnavailable;
     public UnityEvent OnRedoUnavailable;
+    public UnityEvent OnSelectionStateChanged;
 
 
 
@@ -53,5 +54,6 @@ public class EventManager : MonoBehaviour
         OnGizmoDeselected = new UnityEvent<RuntimeTransformGizmo>();
         OnUndoUnavailable = new UnityEvent();
         OnRedoUnavailable = new UnityEvent();
+        OnSelectionStateChanged = new UnityEvent();
     }
 }

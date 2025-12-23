@@ -1,4 +1,4 @@
-Shader "Unlit/TransformGizmoLinearShader"
+Shader "Unlit/TransformGizmoShader"
 {
     Properties
     {

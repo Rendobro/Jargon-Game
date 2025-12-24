@@ -6,83 +6,123 @@ namespace CommandTypes
 {
     public class MoveCommand : IEditorCommand
     {
-        readonly ObjectData obj;
-        readonly Vector3 prevPos;
-        Vector3 targetPos;
-        public MoveCommand(ObjectData obj)
+        private readonly List<ObjectData> objs = new();
+        private readonly List<Vector3> prevPosArr = new();
+        private readonly List<Vector3> targetPosArr = new();
+        public MoveCommand(List<ObjectData> objs)
         {
-            this.obj = obj;
-            prevPos = obj.transform.position;
+            this.objs = new List<ObjectData>(objs);
+            for (int i = 0; i < objs.Count; i++)
+                prevPosArr.Add(objs[i].transform.position);
         }
-
         public void Execute()
         {
-            if (targetPos == null) throw new System.ArgumentNullException();
-            obj.transform.position = targetPos;
+            if (targetPosArr == null) throw new System.ArgumentNullException();
+            for (int i = 0; i < objs.Count; i++)
+                objs[i].transform.position = targetPosArr[i];
         }
-
         public void Undo()
         {
-            obj.transform.position = prevPos;
+            for (int i = 0; i < objs.Count; i++)
+                objs[i].transform.position = prevPosArr[i];
         }
         public void SetFinalState()
         {
-            targetPos = obj.transform.position;
+            targetPosArr.Clear();
+            for (int i = 0; i < objs.Count; i++)
+                targetPosArr.Add(objs[i].transform.position);
         }
     }
 
     public class RotateCommand : IEditorCommand
     {
-        readonly ObjectData obj;
-        readonly Quaternion prevRot;
-        Quaternion targetRot;
-        public RotateCommand(ObjectData obj)
+        private struct RotateState
         {
-            this.obj = obj;
-            prevRot = obj.transform.localRotation;
+            public Quaternion rot;
+            public Vector3 pos;
+            public RotateState(Quaternion q, Vector3 p)
+            {
+                rot = q;
+                pos = p;
+            }
         }
-
+        private readonly List<ObjectData> objs = new();
+        private readonly List<RotateState> prevRotArr = new();
+        private readonly List<RotateState> targetRotArr = new();
+        public RotateCommand(List<ObjectData> objs)
+        {
+            this.objs = new List<ObjectData>(objs);
+            for (int i = 0; i < objs.Count; i++)
+                prevRotArr.Add(new RotateState(objs[i].transform.rotation, objs[i].transform.position));
+        }
         public void Execute()
         {
-            if (targetRot == null) throw new System.ArgumentNullException();
-            obj.transform.localRotation = targetRot;
+            if (targetRotArr == null) throw new System.ArgumentNullException();
+            for (int i = 0; i < objs.Count; i++)
+            {
+                objs[i].transform.rotation = targetRotArr[i].rot;
+                objs[i].transform.position = targetRotArr[i].pos;
+            }
         }
-
         public void Undo()
         {
-            obj.transform.localRotation = prevRot;
+            for (int i = 0; i < objs.Count; i++)
+            {
+                objs[i].transform.rotation = prevRotArr[i].rot;
+                objs[i].transform.position = prevRotArr[i].pos;
+            }
         }
         public void SetFinalState()
         {
-            targetRot = obj.transform.localRotation;
+            targetRotArr.Clear();
+            for (int i = 0; i < objs.Count; i++)
+                targetRotArr.Add(new RotateState(objs[i].transform.rotation, objs[i].transform.position));
         }
     }
 
     public class ScaleCommand : IEditorCommand
     {
-        readonly ObjectData obj;
-        readonly Vector3 prevScale;
-        Vector3 targetScale;
-        public ScaleCommand(ObjectData obj)
+        private struct ScaleState
         {
-            this.obj = obj;
-            prevScale = obj.transform.localScale;
+            public Vector3 scale;
+            public Vector3 pos;
+            public ScaleState(Vector3 s, Vector3 p)
+            {
+                scale = s;
+                pos = p;
+            }
         }
-
+        private readonly List<ObjectData> objs = new();
+        private readonly List<ScaleState> prevScaleArr = new();
+        private readonly List<ScaleState> targetScaleArr = new();
+        public ScaleCommand(List<ObjectData> objs)
+        {
+            this.objs = new List<ObjectData>(objs);
+            for (int i = 0; i < objs.Count; i++)
+                prevScaleArr.Add(new ScaleState(objs[i].transform.localScale,objs[i].transform.localPosition));
+        }
         public void Execute()
         {
-            if (targetScale == null) throw new System.ArgumentNullException();
-            obj.transform.localScale = targetScale;
+            if (targetScaleArr == null) throw new System.ArgumentNullException();
+            for (int i = 0; i < objs.Count; i++)
+            {
+                objs[i].transform.localScale = targetScaleArr[i].scale;
+                objs[i].transform.localPosition = targetScaleArr[i].pos;
+            }
         }
-
         public void Undo()
         {
-            obj.transform.localScale = prevScale;
+            for (int i = 0; i < objs.Count; i++)
+             {
+                objs[i].transform.localScale = prevScaleArr[i].scale;
+                objs[i].transform.localPosition = prevScaleArr[i].pos;
+            }
         }
-
         public void SetFinalState()
         {
-            targetScale = obj.transform.localScale;
+            targetScaleArr.Clear();
+            for (int i = 0; i < objs.Count; i++)
+                targetScaleArr.Add(new ScaleState(objs[i].transform.localScale,objs[i].transform.localPosition));
         }
     }
 }

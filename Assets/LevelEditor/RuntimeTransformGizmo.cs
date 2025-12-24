@@ -80,7 +80,6 @@ public class RuntimeTransformGizmo : MonoBehaviour
         // Screen perspective scaling
         float distance = Vector3.Distance(cam.transform.position, transform.position);
         transform.localScale = Vector3.one * distance * apparentSize;
-
     }
 
     public void SetAxisColor(Color color)
@@ -126,7 +125,6 @@ public class RuntimeTransformGizmo : MonoBehaviour
             case TransformType.Linear:
                 gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[0], gizmoParentTransform);
                 gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
-                Debug.Log($"Gizmo instantiated: {gizmo.name} \nGizmo's parent {gizmo.transform.parent.name}");
                 break;
             case TransformType.Rotation:
                 Vector3 circleNormal = axisDirs;
@@ -147,7 +145,6 @@ public class RuntimeTransformGizmo : MonoBehaviour
         gizmo.transformType = type;
         gizmo.SetAxisColor(color);
         connectedObj.connectedGizmos[type] = gizmo;
-        Debug.Log($"gizmo made: {gizmo}");
         return gizmo;
     }
     public static Color GetStandardAxisColor(RuntimeTransformGizmo gizmo)

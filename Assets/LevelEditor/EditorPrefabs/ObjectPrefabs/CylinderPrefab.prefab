@@ -127,7 +127,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49cab12b20c5f4aba8769e60867ff9c1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objID: 0
+  objID: 1
+  gizmosParent: {fileID: 0}
   position: {x: 0, y: 0, z: 0}
   rotation: {x: 0, y: 0, z: 0, w: 0}
   scale: {x: 0, y: 0, z: 0}

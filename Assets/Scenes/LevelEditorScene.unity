@@ -298,7 +298,9 @@ MonoBehaviour:
       position: {x: -2.3739042, y: 0.28291154, z: 7.743941}
       rotation: {x: 0.6413359, y: -0.25946838, z: 0.0012790661, w: 0.7220547}
       scale: {x: 1, y: 1, z: 1}
-  objMoveSensitivity: 2
+  objMoveSensitivity: 5
+  objRotateSensitivity: 500
+  objScaleSensitivity: 30
 --- !u!1 &536320372
 GameObject:
   m_ObjectHideFlags: 0

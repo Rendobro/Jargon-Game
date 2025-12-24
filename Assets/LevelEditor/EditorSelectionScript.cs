@@ -2,9 +2,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using System;
+using System.Linq;
 public class EditorSelectionScript : MonoBehaviour
 {
-    private readonly int editorObjectLayer = 1 << 8;
+    public static EditorSelectionScript Instance {get; private set;}
+        private readonly int editorObjectLayer = 1 << 8;
     private readonly int editorGizmoLayer = 1 << 9;
     private Transform lastHitTransform = null;
     private RuntimeTransformGizmo lastHitGizmo = null;
@@ -12,8 +14,10 @@ public class EditorSelectionScript : MonoBehaviour
     [SerializeField] private static Color hoverColor;
     private static Color mixedColor;
     private bool multiSelectOn = false;
+    private ObjectData pivot;
     private readonly HashSet<ObjectData> selectedObjects = new();
-
+    public IReadOnlyCollection<ObjectData> SelectedObjects => selectedObjects;
+    private List<ObjectData> previousSelectedObjects = new();
     private static SelectionState selectionState;
     public static SelectionState EditorSelectionState
     {
@@ -35,19 +39,28 @@ public class EditorSelectionScript : MonoBehaviour
 
     private void Awake()
     {
+        if (Instance != null && Instance != this)
+        {
+            Debug.LogError("Already an EventManager Instance in this scene.\nDestroying current instance.");
+            Destroy(gameObject);
+            return;
+        }
+        Instance = this;
+
         selectedColor = Color.green;
         hoverColor = Color.cyan;
         float mixAmount = 0.35f;
         Vector3 colorCoords = Vector3.Lerp(new Vector3(hoverColor.r, hoverColor.g, hoverColor.b), new Vector3(selectedColor.r, selectedColor.g, selectedColor.b), mixAmount);
         mixedColor = new Color(colorCoords.x, colorCoords.y, colorCoords.z);
+        pivot = Instantiate(EditorObjectPrefabsContainer.Instance.editorPrefabs[0], Vector3.zero, Quaternion.identity);
+        pivot.gameObject.SetActive(false);
     }
 
     private void OnEnable()
     {
-        //Debug.Log($"Event Manager is null? {EventManager.Instance == null}");
         EventManager.Instance.OnObjectSelected.AddListener(SetTransformGizmos);
         EventManager.Instance.OnGizmoSelected.AddListener(SetSelectedGizmoColor);
-        EventManager.Instance.OnObjectDeselected.AddListener(RemoveTransformGizmo);
+        EventManager.Instance.OnObjectDeselected.AddListener(RemoveTransformGizmos);
         EventManager.Instance.OnSelectionStateChanged.AddListener(AlterTransformGizmos);
     }
 
@@ -55,7 +68,7 @@ public class EditorSelectionScript : MonoBehaviour
     {
         EventManager.Instance.OnObjectSelected.RemoveListener(SetTransformGizmos);
         EventManager.Instance.OnGizmoSelected.RemoveListener(SetSelectedGizmoColor);
-        EventManager.Instance.OnObjectDeselected.RemoveListener(RemoveTransformGizmo);
+        EventManager.Instance.OnObjectDeselected.RemoveListener(RemoveTransformGizmos);
         EventManager.Instance.OnSelectionStateChanged.RemoveListener(AlterTransformGizmos);
     }
 
@@ -64,10 +77,20 @@ public class EditorSelectionScript : MonoBehaviour
         multiSelectOn = Input.GetButton("MultiSelect");
         HandleGizmoSelecting();
         HandleObjectSelecting();
+        if (multiSelectOn && selectedObjects.Count > 1)
+        {
+            Vector3 pivotPos = FindObjectsMidpoint(selectedObjects.ToArray<ObjectData>());
+            pivot.transform.position = pivotPos;
+            foreach (ObjectData obj in selectedObjects)
+                RemoveTransformGizmos(obj);
+            SetTransformGizmos(pivot);
+            pivot.gameObject.SetActive(true);
+        }
+
+        // Temporary testing of changing states
         if (Input.GetKeyDown(KeyCode.J)) EditorSelectionState = SelectionState.Linear;
         if (Input.GetKeyDown(KeyCode.K)) EditorSelectionState = SelectionState.Rotation;
         if (Input.GetKeyDown(KeyCode.L)) EditorSelectionState = SelectionState.Scale;
-
     }
 
     private void HandleObjectSelecting()
@@ -120,6 +143,12 @@ public class EditorSelectionScript : MonoBehaviour
         List<ObjectData> objectsToDeselect = new(selectedObjects);
 
         foreach (ObjectData _o in objectsToDeselect) DeselectObject(_o);
+
+        if (pivot.isActiveAndEnabled)
+        {
+            RemoveTransformGizmos(pivot);
+            pivot.gameObject.SetActive(false);
+        }
     }
 
     private void HoverObject(ObjectData obj, Color customCol)
@@ -176,8 +205,6 @@ public class EditorSelectionScript : MonoBehaviour
 
             if (type == RuntimeTransformGizmo.TransformType.Z) continue;
 
-            Debug.Log($"type: {(RuntimeTransformGizmo.TransformType)type}");
-
             switch (EditorSelectionState)
             {
                 case SelectionState.Linear:
@@ -201,14 +228,12 @@ public class EditorSelectionScript : MonoBehaviour
             }
 
             connectedGizmos[type] = RuntimeTransformGizmo.CreateGizmo(type, obj);
-
-            Debug.Log("test: " + connectedGizmos[type]);
-
+            
             connectedGizmos[type].gameObject.SetActive(true);
         }
     }
 
-    private void RemoveTransformGizmo(ObjectData obj)
+    private void RemoveTransformGizmos(ObjectData obj)
     {
         //Debug.Log($"Connected gizmo for {obj.name} is null: {obj.connectedGizmo == null}");
         foreach (RuntimeTransformGizmo.TransformType key in obj.connectedGizmos.Keys)
@@ -217,10 +242,18 @@ public class EditorSelectionScript : MonoBehaviour
 
     private void AlterTransformGizmos()
     {
-        foreach (ObjectData obj in selectedObjects)
+        if (!pivot.isActiveAndEnabled)
         {
-            RemoveTransformGizmo(obj);
-            SetTransformGizmos(obj);
+            foreach (ObjectData obj in selectedObjects)
+            {
+                RemoveTransformGizmos(obj);
+                SetTransformGizmos(obj);
+            }
+        }
+        else
+        {
+            RemoveTransformGizmos(pivot);
+            SetTransformGizmos(pivot);
         }
     }
 
@@ -298,6 +331,13 @@ public class EditorSelectionScript : MonoBehaviour
         float brightness = 0.25f;
         Color newCol = Color.Lerp(RuntimeTransformGizmo.GetStandardAxisColor(gizmo), Color.white, Mathf.Clamp01(brightness));
         gizmo.SetAxisColor(newCol);
+    }
+
+    private Vector3 FindObjectsMidpoint(ObjectData[] objList)
+    {
+        Vector3 posVecSum = Vector3.zero;
+        foreach (ObjectData obj in objList) posVecSum += obj.transform.position;
+        return posVecSum / objList.Length;
     }
 
     public static Color GetHoverColor()

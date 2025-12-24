@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Unity.Services.CloudSave;
 
-[CreateAssetMenu(fileName = "EditorPrefabsContainer", menuName = "Scriptable Objects/EditorPrefabsContainer")]
+[CreateAssetMenu(fileName = "EditorObjectPrefabsContainer", menuName = "Scriptable Objects/EditorObjectPrefabsContainer")]
 public class EditorObjectPrefabsContainer : ScriptableObject
 {
     private static EditorObjectPrefabsContainer _instance;
@@ -14,13 +14,13 @@ public class EditorObjectPrefabsContainer : ScriptableObject
             if (_instance == null)
             {
                 _instance = Resources.Load<EditorObjectPrefabsContainer>(
-                    "EditorPrefabsContainer"
+                    "EditorObjectPrefabsContainer"
                 );
 
                 if (_instance == null)
                 {
                     Debug.LogError(
-                        "EditorPrefabsContainer not found in Resources!"
+                        "EditorObjectPrefabsContainer not found in Resources!"
                     );
                 }
             }

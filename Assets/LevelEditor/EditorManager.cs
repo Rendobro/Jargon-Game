@@ -5,6 +5,7 @@ using CommandTypes;
 using System.Collections;
 using System;
 using Vector3 = UnityEngine.Vector3;
+using System.Linq;
 public class EditorManager : MonoBehaviour, IDataPersistence
 {
     // This class manages level loading and object manipulation.
@@ -160,16 +161,19 @@ public class EditorManager : MonoBehaviour, IDataPersistence
         | RuntimeTransformGizmo.TransformType.Rotation
         | RuntimeTransformGizmo.TransformType.Scale);
 
+        bool isPivot = gizmo.Target.objID == 0;
+        List<ObjectData> selectedObjects = EditorSelectionScript.Instance.SelectedObjects.ToList<ObjectData>();
+        if (isPivot) selectedObjects.Add(gizmo.Target);
         switch (gizmo.transformType & axisTypeFlags)
         {
             case RuntimeTransformGizmo.TransformType.Linear:
-                activeCommand = new MoveCommand(gizmo.Target);
+                activeCommand = new MoveCommand(selectedObjects);
                 break;
             case RuntimeTransformGizmo.TransformType.Rotation:
-                activeCommand = new RotateCommand(gizmo.Target);
+                activeCommand = new RotateCommand(selectedObjects);
                 break;
             case RuntimeTransformGizmo.TransformType.Scale:
-                activeCommand = new ScaleCommand(gizmo.Target);
+                activeCommand = new ScaleCommand(selectedObjects);
                 break;
             default:
                 break;
@@ -187,13 +191,15 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
     private IEnumerator TransformObject(RuntimeTransformGizmo gizmo)
     {
-        Transform targetTransform = gizmo.Target.transform;
-        Transform gizmoTransform = gizmo.transform;
+        bool isPivot = gizmo.Target.objID == 0;
+
         switch (EditorSelectionScript.EditorSelectionState)
         {
             case EditorSelectionScript.SelectionState.Linear:
                 while (gizmo.IsHeld)
                 {
+                    Transform gizmoTransform = gizmo.transform;
+
                     // Project two end points of the up vector
                     // and then subtract to get the connecting 
                     // screen space vector
@@ -201,42 +207,54 @@ public class EditorManager : MonoBehaviour, IDataPersistence
                         (Camera.main.WorldToScreenPoint(gizmoTransform.up + gizmoTransform.position)
                         - Camera.main.WorldToScreenPoint(gizmoTransform.position)).normalized;
 
-                    float distToObj = (Camera.main.transform.position - gizmo.transform.position).magnitude;
+                    float distToObj = (Camera.main.transform.position - gizmoTransform.position).magnitude;
 
                     //Calculate how much the delta is in the direction of the axis
                     float initialMouseDelta = Vector2.Dot(Input.mousePositionDelta, gizmoAxisToScreen);
 
                     //Gizmo should naturally face "up" in the correct direction based on instantiation
                     Vector3 worldDelta = gizmoTransform.up * initialMouseDelta * distToObj * objMoveSensitivity * Time.deltaTime;
+                    foreach (ObjectData selectedObj in EditorSelectionScript.Instance.SelectedObjects)
+                        selectedObj.transform.Translate(worldDelta, Space.World);
 
-                    targetTransform.Translate(worldDelta, Space.World);
+                    if (isPivot) gizmo.Target.transform.Translate(worldDelta, Space.World);
                     yield return null;
                 }
                 break;
             case EditorSelectionScript.SelectionState.Rotation:
                 while (gizmo.IsHeld)
                 {
-                    //Gizmo should naturally face "up" in the correct direction based on instantiation
-                    Vector3 rotationAxis = gizmo.transform.up;
+                    foreach (ObjectData selectedObj in EditorSelectionScript.Instance.SelectedObjects)
+                    {
+                        Transform targetTransform = selectedObj.transform;
+                        Transform gizmoTransform = gizmo.transform;
 
-                    Vector3 hitPoint = GetMousePlaneIntersection(rotationAxis, gizmo.Target.transform.position, Vector3.zero);
-                    Vector3 prevHitPoint = GetMousePlaneIntersection(rotationAxis, gizmo.Target.transform.position, Input.mousePositionDelta);
+                        Transform objTransform = gizmo.Target.transform;
 
-                    Vector3 currentDir = (hitPoint - gizmo.Target.transform.position).normalized;
+                        //Gizmo should naturally face "up" in the correct direction based on instantiation
+                        Vector3 rotationAxis = gizmoTransform.up;
 
-                    Vector3 lastDir = (prevHitPoint - gizmo.Target.transform.position).normalized;
+                        Vector3 hitPoint = GetMousePlaneIntersection(rotationAxis, objTransform.position, Vector3.zero);
+                        Vector3 prevHitPoint = GetMousePlaneIntersection(rotationAxis, objTransform.position, Input.mousePositionDelta);
+
+                        Vector3 currentDir = (hitPoint - objTransform.position).normalized;
+
+                        Vector3 lastDir = (prevHitPoint - objTransform.position).normalized;
 
 
-                    //Calculate how much the angle needs to change based on mouse position
-                    float deltaAngle = Vector3.SignedAngle(lastDir, currentDir, rotationAxis) * objRotateSensitivity * Time.deltaTime;
+                        //Calculate how much the angle needs to change based on mouse position
+                        float deltaAngle = Vector3.SignedAngle(lastDir, currentDir, rotationAxis) * objRotateSensitivity * Time.deltaTime;
 
-                    targetTransform.Rotate(rotationAxis, deltaAngle, Space.World);
+                        targetTransform.RotateAround(gizmo.Target.transform.position, rotationAxis, deltaAngle);
+                    }
                     yield return null;
                 }
                 break;
             case EditorSelectionScript.SelectionState.Scale:
                 while (gizmo.IsHeld)
                 {
+                    Transform gizmoTransform = gizmo.transform;
+
                     // Project two end points of the up vector
                     // and then subtract to get the connecting 
                     // screen space vector
@@ -244,15 +262,35 @@ public class EditorManager : MonoBehaviour, IDataPersistence
                         (Camera.main.WorldToScreenPoint(gizmoTransform.up + gizmoTransform.position)
                         - Camera.main.WorldToScreenPoint(gizmoTransform.position)).normalized;
 
-                    float distToObj = (Camera.main.transform.position - gizmo.transform.position).magnitude;
+                    float distToObj = (Camera.main.transform.position - gizmoTransform.position).magnitude;
 
                     //Calculate how much the delta is in the direction of the axis
                     float initialMouseDelta = Vector2.Dot(Input.mousePositionDelta, gizmoAxisToScreen);
 
                     //Gizmo should naturally face "up" in the correct direction based on instantiation
                     float scaleDelta = initialMouseDelta * distToObj * objScaleSensitivity * 0.001f;
+                    foreach (ObjectData selectedObj in EditorSelectionScript.Instance.SelectedObjects)
+                    {
+                        Transform targetTransform = selectedObj.transform;
 
-                    targetTransform.localScale += gizmo.LocalUp * scaleDelta;
+                        Vector3 pivotToObj = targetTransform.position - gizmo.Target.transform.position;
+                        Vector3 axis = gizmo.LocalUp.normalized;
+
+                        // Project pivotToObj onto axis
+                        float projection = Vector3.Dot(pivotToObj, axis);
+                        Vector3 projected = axis * projection;
+                        Vector3 perpendicular = pivotToObj - projected;
+
+                        // Scale along axis
+                        float scaleFactor = 1f + scaleDelta; // scaleDelta can be negative or positive
+                        Vector3 newPivotToObj = perpendicular + projected * scaleFactor;
+
+                        targetTransform.position = gizmo.Target.transform.position + newPivotToObj;
+
+                        // Scale the object along the same axis
+                        Vector3 newScale = targetTransform.localScale + axis * scaleDelta;
+                        targetTransform.localScale = Vector3.Max(newScale, Vector3.one * 0.01f);
+                    }
                     yield return null;
                 }
                 break;
@@ -261,6 +299,8 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
         }
     }
+
+
     private Vector3 GetMousePlaneIntersection(Vector3 axis, Vector3 pivot, Vector3 delta)
     {
         Plane plane = new Plane(axis, pivot);
@@ -276,6 +316,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
         Debug.Log("Performed Command");
         //No longer able to redo old commands as now we're performing a new command
         undoneCommands.Clear();
+
 
         activeCommand.SetFinalState();
         activeCommand.Execute();

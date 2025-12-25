@@ -32,7 +32,7 @@ public class RuntimeTransformGizmo : MonoBehaviour
             }
         }
     }
-    public Vector3 LocalUp {get; private set;}
+    public Vector3 LocalUp { get; private set; }
     public enum TransformType
     {
         Linear = 1 << 0,
@@ -50,6 +50,7 @@ public class RuntimeTransformGizmo : MonoBehaviour
         ScaleX = Scale | X,
         ScaleY = Scale | Y,
         ScaleZ = Scale | Z,
+        ScaleXYZ = Scale | X | Y | Z,
     }
 
     private void Awake()
@@ -59,8 +60,13 @@ public class RuntimeTransformGizmo : MonoBehaviour
     private void Start()
     {
         axisMaterial = new Material(EditorGizmoPrefabsContainer.Instance.gizmoBaseMaterial);
+        if (transformType == TransformType.ScaleXYZ)
+        {
+            axisMaterial.renderQueue =
+                EditorGizmoPrefabsContainer.Instance.gizmoBaseMaterial.renderQueue + 1;
+        }
         foreach (Renderer r in childRenderers)
-            r.material = axisMaterial; // instance per rendereR
+            r.material = axisMaterial; // instance per renderer
 
         SetAxisColor(axisColor);
     }
@@ -72,9 +78,9 @@ public class RuntimeTransformGizmo : MonoBehaviour
         // Weird matrix math that magically makes gizmo
         // scale look normal with non-uniform object scalings
         Matrix4x4 invRS = Matrix4x4.Rotate(Target.transform.rotation).inverse *
-                          Matrix4x4.Scale(Target.transform.lossyScale).inverse;
+                  Matrix4x4.Scale(Target.transform.lossyScale).inverse;
 
-        Vector3 signVec = new Vector3(Math.Sign(invRS.lossyScale.x) * Math.Sign(Target.transform.lossyScale.x),Math.Sign(Target.transform.lossyScale.y),Math.Sign(Target.transform.lossyScale.z));
+        Vector3 signVec = new Vector3(Math.Sign(invRS.lossyScale.x) * Math.Sign(Target.transform.lossyScale.x), Math.Sign(Target.transform.lossyScale.y), Math.Sign(Target.transform.lossyScale.z));
         Target.gizmosParent.transform.localScale = Vector3.Scale(invRS.lossyScale, signVec);
 
         // Screen perspective scaling
@@ -86,7 +92,7 @@ public class RuntimeTransformGizmo : MonoBehaviour
     {
         axisColor = color;
         if (axisMaterial == null) return;
-        foreach (var r in childRenderers)
+        foreach (Renderer r in childRenderers)
             r.material.SetColor("_AxisColor", color);
     }
     public static RuntimeTransformGizmo CreateGizmo(TransformType type, ObjectData connectedObj)
@@ -101,6 +107,10 @@ public class RuntimeTransformGizmo : MonoBehaviour
 
         switch (axisDirectionFlags)
         {
+            case TransformType.X | TransformType.Y | TransformType.Z:
+                coolRot = Quaternion.Euler(0f, 0f, 0f);
+                color = Color.gray;
+                break;
             case TransformType.X:
                 coolRot = Quaternion.Euler(0f, 0f, 90f);
                 color = Color.red;
@@ -127,19 +137,22 @@ public class RuntimeTransformGizmo : MonoBehaviour
                 gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
                 break;
             case TransformType.Rotation:
-                Vector3 circleNormal = axisDirs;
                 gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[1], gizmoParentTransform);
                 gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
                 break;
             case TransformType.Scale:
-                Vector3 directionScale = axisDirs;
-                gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[2], gizmoParentTransform);
+                if (type == TransformType.ScaleXYZ)
+                {
+                    gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[3], gizmoParentTransform);
+                }
+                else
+                    gizmo = Instantiate(EditorGizmoPrefabsContainer.Instance.rtgPrefabs[2], gizmoParentTransform);
                 gizmo.transform.Rotate(coolRot.eulerAngles, Space.Self);
                 break;
             default:
                 throw new System.ArgumentException("Gizmo with no type detected. Not supposed to happen.");
         }
-        gizmo.LocalUp = axisDirs;
+        gizmo.LocalUp = axisDirs.normalized;
         gizmo.transform.localPosition = Vector3.zero;
         gizmo.Target = connectedObj;
         gizmo.transformType = type;
@@ -156,6 +169,10 @@ public class RuntimeTransformGizmo : MonoBehaviour
         }
 
         TransformType gType = gizmo.transformType;
+        if (gType == TransformType.ScaleXYZ)
+        {
+            return Color.gray;
+        }
         if ((gType & TransformType.X) != 0)
         {
             return Color.red;

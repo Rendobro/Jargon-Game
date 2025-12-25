@@ -3,17 +3,29 @@ using System.Collections.Generic;
 using Unity.VisualScripting;
 using System;
 using System.Linq;
+using System.Collections;
+using System.Net.Security;
+using UnityEngine.Android;
 public class EditorSelectionScript : MonoBehaviour
 {
-    public static EditorSelectionScript Instance {get; private set;}
-        private readonly int editorObjectLayer = 1 << 8;
+    public static EditorSelectionScript Instance { get; private set; }
+    private readonly int editorObjectLayer = 1 << 8;
     private readonly int editorGizmoLayer = 1 << 9;
     private Transform lastHitTransform = null;
     private RuntimeTransformGizmo lastHitGizmo = null;
     [SerializeField] private static Color selectedColor;
     [SerializeField] private static Color hoverColor;
     private static Color mixedColor;
-    private bool multiSelectOn = false;
+    private bool multiSelectOn => Input.GetButton("MultiSelect");
+    private Vector2 initialMouseDragPos = Vector2.zero;
+    [SerializeField] private Texture dragBoxTexture;
+    private bool startedDrag
+    => Input.GetButton("Fire1")
+    && Input.mousePositionDelta.magnitude > 0.005f
+    && !dragging
+    && (lastHitGizmo == null || !lastHitGizmo.IsHeld);
+    private bool endedDrag => Input.GetButtonUp("Fire1") && dragging;
+    private bool dragging = false;
     private ObjectData pivot;
     private readonly HashSet<ObjectData> selectedObjects = new();
     public IReadOnlyCollection<ObjectData> SelectedObjects => selectedObjects;
@@ -74,10 +86,35 @@ public class EditorSelectionScript : MonoBehaviour
 
     void Update()
     {
-        multiSelectOn = Input.GetButton("MultiSelect");
         HandleGizmoSelecting();
         HandleObjectSelecting();
-        if (multiSelectOn && selectedObjects.Count > 1)
+        HandleMultiSelectPivot();
+        HandleDragSelecting();
+        if (startedDrag) dragging = true;
+        if (endedDrag) dragging = false;
+
+        // Temporary testing of changing states
+        if (Input.GetKeyDown(KeyCode.J)) EditorSelectionState = SelectionState.Linear;
+        if (Input.GetKeyDown(KeyCode.K)) EditorSelectionState = SelectionState.Rotation;
+        if (Input.GetKeyDown(KeyCode.L)) EditorSelectionState = SelectionState.Scale;
+    }
+
+    private void OnGUI()
+    {
+        if (dragging)
+        {
+            GUI.Box(new Rect
+            (initialMouseDragPos.x,
+            Screen.height - initialMouseDragPos.y,
+            Input.mousePosition.x - initialMouseDragPos.x,
+            initialMouseDragPos.y - Input.mousePosition.y),
+            dragBoxTexture);
+        }
+    }
+
+    private void HandleMultiSelectPivot()
+    {
+        if (selectedObjects.Count > 1)
         {
             Vector3 pivotPos = FindObjectsMidpoint(selectedObjects.ToArray<ObjectData>());
             pivot.transform.position = pivotPos;
@@ -86,12 +123,60 @@ public class EditorSelectionScript : MonoBehaviour
             SetTransformGizmos(pivot);
             pivot.gameObject.SetActive(true);
         }
-
-        // Temporary testing of changing states
-        if (Input.GetKeyDown(KeyCode.J)) EditorSelectionState = SelectionState.Linear;
-        if (Input.GetKeyDown(KeyCode.K)) EditorSelectionState = SelectionState.Rotation;
-        if (Input.GetKeyDown(KeyCode.L)) EditorSelectionState = SelectionState.Scale;
     }
+
+    private void HandleDragSelecting()
+    {
+        if (startedDrag)
+        {
+            initialMouseDragPos = Input.mousePosition;
+            Debug.Log(initialMouseDragPos);
+        }
+        if (endedDrag)
+        {
+            Vector2 finalMousePos = Input.mousePosition;
+            Rect enclosingRect = new Rect(initialMouseDragPos.x, initialMouseDragPos.y, finalMousePos.x - initialMouseDragPos.x, finalMousePos.y - initialMouseDragPos.y);
+            float xMin = Mathf.Min(initialMouseDragPos.x, finalMousePos.x);
+            float xMax = Mathf.Max(initialMouseDragPos.x, finalMousePos.x);
+            float yMin = Mathf.Min(initialMouseDragPos.y, finalMousePos.y);
+            float yMax = Mathf.Max(initialMouseDragPos.y, finalMousePos.y);
+
+            Camera cam = Camera.main;
+            Ray r00 = cam.ScreenPointToRay(new Vector2(xMin, yMin));
+            Ray r10 = cam.ScreenPointToRay(new Vector2(xMax, yMin));
+            Ray r11 = cam.ScreenPointToRay(new Vector2(xMax, yMax));
+            Ray r01 = cam.ScreenPointToRay(new Vector2(xMin, yMax));
+            Vector3 O = cam.transform.position;
+
+            Plane left = new Plane(O, r01.direction + O, r00.direction + O);
+            Plane right = new Plane(O, r10.direction + O, r11.direction + O);
+            Plane bottom = new Plane(O, r00.direction + O, r10.direction + O);
+            Plane top = new Plane(O, r11.direction + O, r01.direction + O);
+            Plane near = new Plane(cam.transform.forward, cam.transform.position + cam.nearClipPlane * cam.transform.forward);
+            Plane far = new Plane(-cam.transform.forward, cam.transform.position + cam.transform.forward * cam.farClipPlane);
+            Plane[] planes = new Plane[] { left, right, bottom, top, near, far };
+
+            Debug.DrawRay(cam.transform.position, r00.direction * 100, Color.red);
+            Debug.DrawRay(cam.transform.position, r10.direction * 100, Color.green);
+            Debug.DrawRay(cam.transform.position, r11.direction * 100, Color.blue);
+            Debug.DrawRay(cam.transform.position, r01.direction * 100, Color.yellow);
+
+            // remember to cache a list of all current scene objects
+            ObjectData[] allSceneObjects = FindObjectsByType<ObjectData>(FindObjectsSortMode.None);
+
+            foreach (ObjectData obj in allSceneObjects)
+            {
+                if (obj.objID == 0) continue;
+                if (!obj.TryGetComponent(out Collider col)) continue;
+
+                if (GeometryUtility.TestPlanesAABB(planes, col.bounds))
+                {
+                    SelectObject(obj);
+                }
+            }
+        }
+    }
+
 
     private void HandleObjectSelecting()
     {
@@ -115,14 +200,22 @@ public class EditorSelectionScript : MonoBehaviour
 
             lastHitTransform = hitInfo.transform;
         }
-        else if (selectedObjects.Count > 0 && Input.GetButtonDown("Fire1"))
+        else
         {
-            DeselectAllObjects();
+            if (selectedObjects.Count > 0 && Input.GetButtonDown("Fire1"))
+            {
+                DeselectAllObjects();
 
-            lastHitTransform = null;
+                lastHitTransform = null;
+                return;
+            }
+
+            if (lastHitTransform != null)
+            {
+                DehoverObject(lastHitTransform.GetComponent<ObjectData>());
+                return;
+            }
         }
-        else if (lastHitTransform != null)
-            DehoverObject(lastHitTransform.GetComponent<ObjectData>());
 
 
     }
@@ -228,7 +321,7 @@ public class EditorSelectionScript : MonoBehaviour
             }
 
             connectedGizmos[type] = RuntimeTransformGizmo.CreateGizmo(type, obj);
-            
+
             connectedGizmos[type].gameObject.SetActive(true);
         }
     }

@@ -128,7 +128,7 @@ public class EditorManager : MonoBehaviour, IDataPersistence
             newObj.transform.localScale = oi.scale;
             newObj.gameObject.SetActive(true);
 
-            foreach (var component in newObj.GetComponents<MonoBehaviour>()) component.enabled = true;
+            foreach (MonoBehaviour component in newObj.GetComponents<MonoBehaviour>()) component.enabled = true;
 
             foreach (Collider collider in newObj.GetComponents<Collider>()) collider.enabled = true;
 
@@ -269,27 +269,44 @@ public class EditorManager : MonoBehaviour, IDataPersistence
 
                     //Gizmo should naturally face "up" in the correct direction based on instantiation
                     float scaleDelta = initialMouseDelta * distToObj * objScaleSensitivity * 0.001f;
-                    foreach (ObjectData selectedObj in EditorSelectionScript.Instance.SelectedObjects)
+                    float scaleFactor = 1f + scaleDelta; // scaleDelta can be negative or positive
+                    if (gizmo.transformType == RuntimeTransformGizmo.TransformType.ScaleXYZ)
                     {
-                        Transform targetTransform = selectedObj.transform;
+                        foreach (ObjectData selectedObj in EditorSelectionScript.Instance.SelectedObjects)
+                        {
+                            Transform targetTransform = selectedObj.transform;
 
-                        Vector3 pivotToObj = targetTransform.position - gizmo.Target.transform.position;
-                        Vector3 axis = gizmo.LocalUp.normalized;
+                            Vector3 pivotToObj = targetTransform.position - gizmo.Target.transform.position;
+                            pivotToObj *= scaleFactor;
+                            targetTransform.position = gizmo.Target.transform.position + pivotToObj;
 
-                        // Project pivotToObj onto axis
-                        float projection = Vector3.Dot(pivotToObj, axis);
-                        Vector3 projected = axis * projection;
-                        Vector3 perpendicular = pivotToObj - projected;
+                            // Scale the object uniformly
+                            targetTransform.localScale *= scaleFactor;
+                        }
+                    }
+                    else
+                    {
+                        foreach (ObjectData selectedObj in EditorSelectionScript.Instance.SelectedObjects)
+                        {
+                            Transform targetTransform = selectedObj.transform;
 
-                        // Scale along axis
-                        float scaleFactor = 1f + scaleDelta; // scaleDelta can be negative or positive
-                        Vector3 newPivotToObj = perpendicular + projected * scaleFactor;
+                            Vector3 pivotToObj = targetTransform.position - gizmo.Target.transform.position;
+                            Vector3 axis = gizmo.LocalUp.normalized;
 
-                        targetTransform.position = gizmo.Target.transform.position + newPivotToObj;
+                            // Project pivotToObj onto axis
+                            float projection = Vector3.Dot(pivotToObj, axis);
+                            Vector3 projected = axis * projection;
+                            Vector3 perpendicular = pivotToObj - projected;
 
-                        // Scale the object along the same axis
-                        Vector3 newScale = targetTransform.localScale + axis * scaleDelta;
-                        targetTransform.localScale = Vector3.Max(newScale, Vector3.one * 0.01f);
+                            // Scale along axis
+                            Vector3 newPivotToObj = perpendicular + projected * scaleFactor;
+
+                            targetTransform.position = gizmo.Target.transform.position + newPivotToObj;
+
+                            // Scale the object along the same axis
+                            Vector3 newScale = targetTransform.localScale + axis * scaleDelta;
+                            targetTransform.localScale = Vector3.Max(newScale, Vector3.one * 0.1f);
+                        }
                     }
                     yield return null;
                 }
